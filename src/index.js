@@ -14,20 +14,11 @@
  * limitations under the License.
  * =============================================================================
  */
-
-//import '@tensorflow/tfjs-backend-webgl';
-//import * as mpPose from '@mediapipe/pose';
-
-//import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
-//
-//tfjsWasm.setWasmPaths(
-//    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
-//        tfjsWasm.version_wasm}/dist/`);
+// TODO select model type based on device
 
 import {Context} from './camera.js';
 import {setupDatGui} from './option_panel.js';
 import {STATE} from './params.js';
-import {setBackendAndEnvFlags} from './util.js';
 
 let detector, camera;
 let lastPanelUpdate = 0;
@@ -37,17 +28,9 @@ const statusElement = document.getElementById('status');
 async function createDetector() {
   switch (STATE.model) {
     case poseDetection.SupportedModels.BlazePose:
-      const runtime = STATE.backend.split('-')[0];
-      if (runtime === 'mediapipe') {
-        return poseDetection.createDetector(STATE.model, {
-          runtime,
-          modelType: STATE.modelConfig.type,
-          solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@${mpPose.VERSION}`
-        });
-      } else if (runtime === 'tfjs') {
-        return poseDetection.createDetector(
+      const runtime = "tfjs";
+      return poseDetection.createDetector(
             STATE.model, {runtime, modelType: STATE.modelConfig.type});
-      }
     case poseDetection.SupportedModels.MoveNet:
       const modelType = STATE.modelConfig.type == 'lightning' ?
           poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
@@ -58,20 +41,14 @@ async function createDetector() {
 }
 
 async function checkGuiUpdate() {
-  if (STATE.isModelChanged || STATE.isFlagChanged || STATE.isBackendChanged) {
+  if (STATE.isModelChanged) {
     STATE.isModelChanged = true;
 
     window.cancelAnimationFrame(rafId);
 
     detector.dispose();
 
-    if (STATE.isFlagChanged || STATE.isBackendChanged) {
-      await setBackendAndEnvFlags(STATE.flags, STATE.backend);
-    }
-
     detector = await createDetector(STATE.model);
-    STATE.isFlagChanged = false;
-    STATE.isBackendChanged = false;
     STATE.isModelChanged = false;
   }
 }
@@ -137,18 +114,14 @@ async function runFrame() {
 async function run() {
   statusElement.innerHTML = 'Warming up model.';
 
-  // Warming up pipeline.
-  const [runtime, $backend] = STATE.backend.split('-');
-
-  if (runtime === 'tfjs') {
-    const warmUpTensor =
-        tf.fill([camera.video.height, camera.video.width, 3], 0, 'float32');
-    await detector.estimatePoses(
-        warmUpTensor,
-        {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
-    warmUpTensor.dispose();
-    statusElement.innerHTML = 'Model is warmed up.';
-  }
+  // Warm up model
+  const warmUpTensor =
+      tf.fill([camera.video.height, camera.video.width, 3], 0, 'float32');
+  await detector.estimatePoses(
+      warmUpTensor,
+      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+  warmUpTensor.dispose();
+  statusElement.innerHTML = 'Model is warmed up.';
 
   camera.video.style.visibility = 'hidden';
   video.pause();
@@ -166,18 +139,9 @@ async function run() {
 }
 
 async function app() {
-  // Gui content will change depending on which model is in the query string.
-  const urlParams = new URLSearchParams(window.location.search);
-  //if (!urlParams.has('model')) {
-  //  alert('Cannot find model in the query string.');
-  //  return;
-  //}
-
-  await setupDatGui(urlParams);
+  await setupDatGui();
   detector = await createDetector();
   camera = new Context();
-
-  await setBackendAndEnvFlags(STATE.flags, STATE.backend);
 
   const runButton = document.getElementById('submit');
   runButton.onclick = run;
