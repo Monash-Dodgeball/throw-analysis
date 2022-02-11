@@ -54,7 +54,13 @@ export async function setupDatGui(urlParams) {
       }
       break;
     default:
-      alert(`${urlParams.get('model')}`);
+      //alert(`${urlParams.get('model')}`);
+      // Default to movenet
+      params.STATE.model = poseDetection.SupportedModels.MoveNet;
+      if (type !== 'lightning' && type !== 'thunder') {
+        // Nulify invalid value.
+        type = null;
+      }
       break;
   }
 

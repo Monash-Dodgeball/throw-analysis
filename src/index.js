@@ -24,15 +24,13 @@
 //    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
 //        tfjsWasm.version_wasm}/dist/`);
 
-import {setupStats} from './stats_panel.js';
 import {Context} from './camera.js';
 import {setupDatGui} from './option_panel.js';
 import {STATE} from './params.js';
 import {setBackendAndEnvFlags} from './util.js';
 
-let detector, camera, stats;
-let startInferenceTime, numInferences = 0;
-let inferenceTimeSum = 0, lastPanelUpdate = 0;
+let detector, camera;
+let lastPanelUpdate = 0;
 let rafId;
 const statusElement = document.getElementById('status');
 
@@ -78,35 +76,10 @@ async function checkGuiUpdate() {
   }
 }
 
-function beginEstimatePosesStats() {
-  startInferenceTime = (performance || Date).now();
-}
-
-function endEstimatePosesStats() {
-  const endInferenceTime = (performance || Date).now();
-  inferenceTimeSum += endInferenceTime - startInferenceTime;
-  ++numInferences;
-
-  const panelUpdateMilliseconds = 1000;
-  if (endInferenceTime - lastPanelUpdate >= panelUpdateMilliseconds) {
-    const averageInferenceTime = inferenceTimeSum / numInferences;
-    inferenceTimeSum = 0;
-    numInferences = 0;
-    stats.customFpsPanel.update(
-        1000.0 / averageInferenceTime, 120 /* maxValue */);
-    lastPanelUpdate = endInferenceTime;
-  }
-}
-
 async function renderResult() {
-  // FPS only counts the time it takes to finish estimatePoses.
-  beginEstimatePosesStats();
-
   const poses = await detector.estimatePoses(
       camera.video,
       {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
-
-  endEstimatePosesStats();
 
   camera.drawCtx();
 
@@ -195,13 +168,12 @@ async function run() {
 async function app() {
   // Gui content will change depending on which model is in the query string.
   const urlParams = new URLSearchParams(window.location.search);
-  if (!urlParams.has('model')) {
-    alert('Cannot find model in the query string.');
-    return;
-  }
+  //if (!urlParams.has('model')) {
+  //  alert('Cannot find model in the query string.');
+  //  return;
+  //}
 
   await setupDatGui(urlParams);
-  stats = setupStats();
   detector = await createDetector();
   camera = new Context();
 

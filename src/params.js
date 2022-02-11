@@ -26,7 +26,7 @@ export const STATE = {
 export const BLAZEPOSE_CONFIG = {
   maxPoses: 1,
   type: 'heavy',
-  scoreThreshold: 0.65
+  scoreThreshold: 0.65,
 };
 export const POSENET_CONFIG = {
   maxPoses: 1,
@@ -38,7 +38,7 @@ export const MOVENET_CONFIG = {
   scoreThreshold: 0.3
 };
 /**
- * This map descripes tunable flags and theior corresponding types.
+ * This map descripes tunable flags and their corresponding types.
  *
  * The flags (keys) in the map satisfy the following two conditions:
  * - Is tunable. For example, `IS_BROWSER` and `IS_CHROME` is not tunable,
