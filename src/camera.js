@@ -23,7 +23,15 @@ export class Context {
     this.source = document.getElementById('currentVID');
     this.ctx = this.canvas.getContext('2d');
     const stream = this.canvas.captureStream();
-    const options = {mimeType: 'video/webm; codecs=vp9'};
+
+    // Hack to get vp9 to work on firefox
+    let options;
+    if (navigator.userAgent.match(/firefox|fxios/i)) {
+      options = {mimeType: 'video/webm; codecs=vp8'};
+    } else {
+      options = {mimeType: 'video/webm; codecs=vp9'};
+    }
+
     this.mediaRecorder = new MediaRecorder(stream, options);
     this.mediaRecorder.ondataavailable = this.handleDataAvailable;
   }
