@@ -146,6 +146,7 @@ export class Context {
     if (event.data.size > 0) {
       const recordedChunks = [event.data];
 
+      // TODO Surely theres a less hacky way to to this
       // Download.
       const blob = new Blob(recordedChunks, {type: 'video/webm'});
       const url = URL.createObjectURL(blob);
@@ -154,8 +155,10 @@ export class Context {
       a.style = 'display: none';
       a.href = url;
       a.download = 'pose.webm';
-      a.click();
-      window.URL.revokeObjectURL(url);
+      //a.click();
+      //window.URL.revokeObjectURL(url);
+      a.id = 'newvideo'
+      // TODO set visibility of buttons
     }
   }
 }

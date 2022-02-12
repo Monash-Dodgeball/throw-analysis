@@ -15,6 +15,7 @@
  * =============================================================================
  */
 // TODO select model type based on device
+// TODO scrubber
 
 import {Context} from './camera.js';
 import {setupDatGui} from './option_panel.js';
@@ -138,6 +139,16 @@ async function run() {
   await runFrame();
 }
 
+async function downloadVideo() {
+  const a = document.getElementById('newvideo');
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+async function downloadPose() {
+
+}
+
 async function app() {
   await setupDatGui();
   detector = await createDetector();
@@ -148,6 +159,12 @@ async function app() {
 
   const uploadButton = document.getElementById('videofile');
   uploadButton.onchange = updateVideo;
+
+  const downloadVideoButton = document.getElementById('downloadVideo')
+  downloadVideoButton.onclick = downloadVideo;
+
+  const downloadPoseButton = document.getElementById('downloadPose')
+  downloadPoseButton.onclick = downloadPose;
 
   checkUpdate();
 };
