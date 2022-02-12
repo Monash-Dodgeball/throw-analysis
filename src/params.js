@@ -21,15 +21,19 @@ export const DEFAULT_RADIUS = 4;
 export const STATE = {
   backend: 'tfjs-webgl',
   flags: {},
-  modelConfig: {}
+  modelConfig: {},
+  model: poseDetection.SupportedModels.MoveNet,
 };
+
 export const BLAZEPOSE_CONFIG = {
   maxPoses: 1,
-  type: 'heavy',
+  type: 'heavy', // in ['heavy', 'full', 'lite']
   scoreThreshold: 0.65,
 };
 export const MOVENET_CONFIG = {
   maxPoses: 1,
-  type: 'lightning',
+  type: 'thunder', // in ['lightning', 'thunder']
   scoreThreshold: 0.3
 };
+
+STATE.modelConfig = {...BLAZEPOSE_CONFIG};

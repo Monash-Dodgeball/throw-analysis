@@ -18,7 +18,6 @@
 // TODO scrubber
 
 import {Context} from './camera.js';
-import {setupDatGui} from './option_panel.js';
 import {STATE} from './params.js';
 
 let detector, camera;
@@ -26,7 +25,10 @@ let lastPanelUpdate = 0;
 let rafId;
 const statusElement = document.getElementById('status');
 
+let poseList = [];
+
 async function createDetector() {
+  console.log(STATE.modelConfig.type)
   switch (STATE.model) {
     case poseDetection.SupportedModels.BlazePose:
       const runtime = "tfjs";
@@ -41,37 +43,19 @@ async function createDetector() {
   }
 }
 
-async function checkGuiUpdate() {
-  if (STATE.isModelChanged) {
-    STATE.isModelChanged = true;
-
-    window.cancelAnimationFrame(rafId);
-
-    detector.dispose();
-
-    detector = await createDetector(STATE.model);
-    STATE.isModelChanged = false;
-  }
-}
-
 async function renderResult() {
   const poses = await detector.estimatePoses(
       camera.video,
       {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+  console.log(poses)
+
+  poseList.push(poses)
 
   camera.drawCtx();
-
-  // The null check makes sure the UI is not in the middle of changing to a
-  // different model. If during model change, the result is from an old
-  // model, which shouldn't be rendered.
-  if (poses.length > 0 && !STATE.isModelChanged) {
-    camera.drawResults(poses);
-  }
+  camera.drawResults(poses);
 }
 
 async function checkUpdate() {
-  await checkGuiUpdate();
-
   requestAnimationFrame(checkUpdate);
 };
 
@@ -113,6 +97,8 @@ async function runFrame() {
 }
 
 async function run() {
+  poseList = [];
+
   statusElement.innerHTML = 'Warming up model.';
 
   // Warm up model
@@ -142,15 +128,38 @@ async function run() {
 async function downloadVideo() {
   const a = document.getElementById('newvideo');
   a.click();
-  window.URL.revokeObjectURL(url);
+  window.URL.revokeObjectURL(a.url);
 }
 
 async function downloadPose() {
+  console.log('meme')
+  // TODO parse output into csv or some other form
+  const blob = new Blob(poseList, {type: 'text/plain'});
+  //console.log(blob)
+  //console.log(poseList)
+  const url = URL.createObjectURL(blob);
+  const b = document.createElement('b');
+  document.body.appendChild(b)
+  b.style = 'display: none';
+  b.href = url;
+  b.download = 'pose.csv';
+  b.click();
+  window.URL.revokeObjectURL(url);
+
+  //var csvContent = JSON.stringify(poseList[0]);
+  //console.log(poseList)
+  ////console.log(csvContent);
+  //var encodedUri = encodeURI(csvContent);
+  //var link = document.createElement("a");
+  //link.setAttribute("href", encodedUri);
+  //link.setAttribute("download", "my_data.csv");
+  //document.body.appendChild(link); // Required for FF
+
+  //link.click(); // This will download the data file named "my_data.csv".
 
 }
 
 async function app() {
-  await setupDatGui();
   detector = await createDetector();
   camera = new Context();
 
