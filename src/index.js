@@ -15,10 +15,17 @@
  * =============================================================================
  */
 // TODO select model type based on device
-// TODO scrubber
+// 1. TODO Actually estimate frame-by-frame
+//    TODO i.e. stop using MediaRecorder
+// TODO mediapipe backend
+// TODO Render 3D
 
 import {Context} from './camera.js';
 import {STATE} from './params.js';
+
+tf.wasm.setWasmPaths(
+    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+        tf.wasm.version_wasm}/dist/`);
 
 let detector, camera;
 let lastPanelUpdate = 0;
@@ -26,14 +33,20 @@ let rafId;
 const statusElement = document.getElementById('status');
 
 let poseList = [];
+let poseData = "";
 
 async function createDetector() {
-  console.log(STATE.modelConfig.type)
   switch (STATE.model) {
     case poseDetection.SupportedModels.BlazePose:
       const runtime = "tfjs";
       return poseDetection.createDetector(
             STATE.model, {runtime, modelType: STATE.modelConfig.type});
+      //const runtime = "mediapipe";
+      //return poseDetection.createDetector(STATE.model, {
+      //  runtime,
+      //  modelType: STATE.modelConfig.type,
+      //  solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@{VERSION}`
+      //})
     case poseDetection.SupportedModels.MoveNet:
       const modelType = STATE.modelConfig.type == 'lightning' ?
           poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
@@ -47,9 +60,9 @@ async function renderResult() {
   const poses = await detector.estimatePoses(
       camera.video,
       {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
-  console.log(poses)
 
-  poseList.push(poses)
+  // TODO Handle maxposes > 1?
+  poseList.push(poses[0])
 
   camera.drawCtx();
   camera.drawResults(poses);
@@ -90,6 +103,23 @@ async function runFrame() {
     camera.mediaRecorder.stop();
     camera.clearCtx();
     camera.video.style.visibility = 'visible';
+
+    // Download
+    let data = "frame,name,x2d,y2d,x,y,z,score\n"
+    for (let i = 0; i < poseList.length; i++) {
+      let keypoints = poseList[i].keypoints;
+      let keypoints3D = poseList[i].keypoints3D;
+      for (let j = 0; j < keypoints.length; j++) {
+        let obj = keypoints[j];
+        let obj3D = keypoints3D[j];
+        let row = [i, obj.name, obj.x, obj.y, obj3D.x,
+                   obj3D.y, obj3D.z, obj3D.score].join(",");
+        data += row + "\n"
+      }
+    }
+
+    poseData = data;
+
     return;
   }
   await renderResult();
@@ -126,37 +156,30 @@ async function run() {
 }
 
 async function downloadVideo() {
-  const a = document.getElementById('newvideo');
+  console.log(camera.videoData)
+  // TODO set visibility of buttons
+  const blob = new Blob(camera.videoData, {type: 'video/webm'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  document.body.appendChild(a);
+  a.style = 'display: none';
+  a.href = url;
+  a.download = 'pose.webm';
   a.click();
-  window.URL.revokeObjectURL(a.url);
+  window.URL.revokeObjectURL(url);
 }
 
 async function downloadPose() {
-  console.log('meme')
-  // TODO parse output into csv or some other form
-  const blob = new Blob(poseList, {type: 'text/plain'});
-  //console.log(blob)
-  //console.log(poseList)
+  //const a = document.getElementById('newpose');
+  const blob = new Blob([poseData], {type: 'text/csv'});
   const url = URL.createObjectURL(blob);
-  const b = document.createElement('b');
-  document.body.appendChild(b)
-  b.style = 'display: none';
-  b.href = url;
-  b.download = 'pose.csv';
-  b.click();
-  window.URL.revokeObjectURL(url);
-
-  //var csvContent = JSON.stringify(poseList[0]);
-  //console.log(poseList)
-  ////console.log(csvContent);
-  //var encodedUri = encodeURI(csvContent);
-  //var link = document.createElement("a");
-  //link.setAttribute("href", encodedUri);
-  //link.setAttribute("download", "my_data.csv");
-  //document.body.appendChild(link); // Required for FF
-
-  //link.click(); // This will download the data file named "my_data.csv".
-
+  const a = document.createElement('a');
+  document.body.appendChild(a);
+  a.style = 'display: none';
+  a.href = url;
+  a.download = 'pose.csv';
+  a.click();
+  window.URL.revokeObjectURL(a.url);
 }
 
 async function app() {

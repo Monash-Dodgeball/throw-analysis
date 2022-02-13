@@ -22,13 +22,15 @@ export const STATE = {
   backend: 'tfjs-webgl',
   flags: {},
   modelConfig: {},
-  model: poseDetection.SupportedModels.MoveNet,
+  //model: poseDetection.SupportedModels.MoveNet,
+  model: poseDetection.SupportedModels.BlazePose,
 };
 
 export const BLAZEPOSE_CONFIG = {
   maxPoses: 1,
-  type: 'heavy', // in ['heavy', 'full', 'lite']
-  scoreThreshold: 0.65,
+  type: 'lite', // in ['heavy', 'full', 'lite']
+  //scoreThreshold: 0.65,
+  scoreThreshold: 0.3,
 };
 export const MOVENET_CONFIG = {
   maxPoses: 1,
