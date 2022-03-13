@@ -31,24 +31,16 @@ let frameText = document.getElementById('current_frame')
 let poseData = "";
 
 async function createDetector() {
-  switch (STATE.model) {
-    case poseDetection.SupportedModels.BlazePose:
-      const runtime = "tfjs";
-      return poseDetection.createDetector(
-        STATE.model, {runtime, modelType: STATE.modelConfig.type, enableSmoothing: true});
-      //const runtime = "mediapipe";
-      //return poseDetection.createDetector(STATE.model, {
-      //  runtime,
-      //  modelType: STATE.modelConfig.type,
-      //  solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@{VERSION}`
-      //})
-    case poseDetection.SupportedModels.MoveNet:
-      const modelType = STATE.modelConfig.type == 'lightning' ?
-          poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
-          poseDetection.movenet.modelType.SINGLEPOSE_THUNDER;
-      // TODO Model smoothing
-      return poseDetection.createDetector(STATE.model, {modelType});
-  }
+  const runtime = "tfjs";
+  return poseDetection.createDetector(
+    STATE.model, {runtime, modelType: STATE.modelConfig.type, enableSmoothing: true});
+  //const runtime = "mediapipe";
+  //return poseDetection.createDetector(STATE.model, {
+  //  runtime,
+  //  modelType: STATE.modelConfig.type,
+  //  solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@{VERSION}`
+  //})
+}
 }
 
 async function updateVideo(event) {
@@ -125,7 +117,13 @@ async function runFrame() {
 
   // Wait for video to be loaded
 
-  //await new Promise(r => setTimeout(r, 1000/camera.framerate));
+
+  const poses = await detector.estimatePoses(
+      camera.video,
+      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+
+  // TODO Handle maxposes > 1?
+  camera.poseList[camera.currentFrame] = poses[0]
 
   await camera.nextFrame();
 
@@ -136,16 +134,7 @@ async function runFrame() {
     };
   });
 
-  //camera.currentFrame += 1
-  //camera.loadCurrentFrameData()
-  const poses = await detector.estimatePoses(
-      camera.video,
-      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
-
-  // TODO Handle maxposes > 1?
-  camera.poseList[camera.currentFrame] = poses[0]
-
-  //rafId = requestAnimationFrame(runFrame);
+  //requestAnimationFrame(runFrame);
   runFrame()
 }
 
@@ -164,18 +153,14 @@ async function run() {
   warmUpTensor.dispose();
   statusElement.innerHTML = 'Model is warmed up.';
 
-  //camera.video.style.visibility = 'hidden';
-  video.pause();
-  video.currentTime = 0;
-  //video.play();
   //camera.mediaRecorder.start();
   camera.firstFrame();
-
-  //await new Promise((resolve) => {
-  //  camera.video.onseeked = () => {
-  //    resolve(video);
-  //  };
-  //});
+  // TODO poses for first frame
+  await new Promise((resolve) => {
+    camera.video.onseeked = () => {
+      resolve(video);
+    };
+  });
 
   await runFrame();
 }
