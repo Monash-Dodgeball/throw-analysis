@@ -45,11 +45,15 @@ export class Context {
   async loadCurrentFrameData () {
     let index = this.currentFrame
 
-    // TODO promise?
-
     // Adding 1ms makes behaviour consistent on firefox and chrome
     this.video.currentTime = index / this.framerate + 0.001
 
+    // TODO seems to make scrubber less smooth sometimes
+    await new Promise((resolve) => {
+      this.video.onseeked = () => {
+        resolve(video);
+      };
+    });
   }
 
   async firstFrame() {

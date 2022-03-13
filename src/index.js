@@ -68,6 +68,7 @@ async function updateVideo(event) {
 
   statusElement.innerHTML = 'Video is loaded.';
 
+  camera.redrawCanvas()
   timerCallback()
 
   camera.frameCount = Math.round(camera.video.duration * camera.framerate)
@@ -76,7 +77,7 @@ async function updateVideo(event) {
 }
 
 function timerCallback() {
-  camera.redrawCanvas()
+  //camera.redrawCanvas()
   updateUi()
   requestAnimationFrame(timerCallback)
 }
@@ -88,8 +89,6 @@ function updateUi() {
 async function runFrame() {
   if (camera.currentFrame >= camera.frameCount-1) {
     // video has finished
-    console.log(camera.poseList)
-    console.log(camera.poseList[0].keypoints)
 
     // For download
     let data = "frame,name,x2d,y2d,x,y,z,score\n"
@@ -104,7 +103,6 @@ async function runFrame() {
         let obj3D = keypoints3D[j];
         let row = [i, obj.name, obj.x, obj.y, obj3D.x,
                    obj3D.y, obj3D.z, obj3D.score].join(",");
-        console.log(row)
         data += row + "\n"
       }
     }
@@ -116,25 +114,26 @@ async function runFrame() {
   }
 
   // Wait for video to be loaded
-
-
   const poses = await detector.estimatePoses(
       camera.video,
       {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
 
-  // TODO Handle maxposes > 1?
   camera.poseList[camera.currentFrame] = poses[0]
 
-  await camera.nextFrame();
+  // Reordering of camera.nextFrame so that poses get drawn for current frame
+  camera.redrawCanvas()
+  camera.currentFrame += 1
+  camera.loadCurrentFrameData()
 
-  //camera.video.load();
+  /* TODO For some reason this seeems to be required, despite the same
+   * code being in camera.loadCurrentFrameData()
+   */
   await new Promise((resolve) => {
     camera.video.onseeked = () => {
       resolve(video);
     };
   });
 
-  //requestAnimationFrame(runFrame);
   runFrame()
 }
 
@@ -155,7 +154,7 @@ async function run() {
 
   //camera.mediaRecorder.start();
   camera.firstFrame();
-  // TODO poses for first frame
+
   await new Promise((resolve) => {
     camera.video.onseeked = () => {
       resolve(video);
@@ -167,7 +166,6 @@ async function run() {
 
 async function downloadVideo() {
   console.log(camera.videoData)
-  // TODO set visibility of buttons
   const blob = new Blob(camera.videoData, {type: 'video/webm'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -180,7 +178,6 @@ async function downloadVideo() {
 }
 
 async function downloadPose() {
-  //const a = document.getElementById('newpose');
   const blob = new Blob([poseData], {type: 'text/csv'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -190,7 +187,6 @@ async function downloadPose() {
   a.download = 'pose.csv';
   a.click();
   window.URL.revokeObjectURL(a.url);
-  console.log(camera.poseList);
 }
 
 async function app() {
