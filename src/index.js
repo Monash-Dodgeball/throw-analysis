@@ -41,7 +41,7 @@ async function createDetector() {
   //  solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@{VERSION}`
   //})
 }
-}
+
 
 async function updateVideo(event) {
   camera.poseList = {};
@@ -87,17 +87,16 @@ function updateUi() {
 
 async function runFrame() {
   if (camera.currentFrame >= camera.frameCount-1) {
-  //if (video.paused) {
+    // video has finished
     console.log(camera.poseList)
-    // video has finished.
-    //camera.mediaRecorder.stop();
-    //camera.clearCtx();
-    //camera.video.style.visibility = 'visible';
+    console.log(camera.poseList[0].keypoints)
 
-    // Download
-    // TODO Need to update this code
+    // For download
     let data = "frame,name,x2d,y2d,x,y,z,score\n"
-    for (let i = 0; i < camera.poseList.length; i++) {
+    for (let i = 0; i < camera.frameCount; i++) {
+      if (!camera.poseList[i]) {
+        continue;
+      }
       let keypoints = camera.poseList[i].keypoints;
       let keypoints3D = camera.poseList[i].keypoints3D;
       for (let j = 0; j < keypoints.length; j++) {
@@ -105,6 +104,7 @@ async function runFrame() {
         let obj3D = keypoints3D[j];
         let row = [i, obj.name, obj.x, obj.y, obj3D.x,
                    obj3D.y, obj3D.z, obj3D.score].join(",");
+        console.log(row)
         data += row + "\n"
       }
     }
@@ -210,7 +210,6 @@ async function app() {
   downloadPoseButton.onclick = downloadPose;
 
   document.getElementById('prevFrame').addEventListener('click', e => {
-    console.log('test')
     camera.prevFrame()
   })
 
