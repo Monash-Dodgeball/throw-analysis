@@ -22,6 +22,10 @@ export class Context {
     this.canvas = document.getElementById('output');
     this.source = document.getElementById('currentVID');
     this.ctx = this.canvas.getContext('2d');
+    this.currentFrame = 0;
+    this.frameCount = 40; // TODO
+    this.framerate = 15;
+    this.poseList = {};
     const stream = this.canvas.captureStream();
 
     // Hack to get vp9 to work on firefox
@@ -34,15 +38,62 @@ export class Context {
 
     this.mediaRecorder = new MediaRecorder(stream, options);
     this.mediaRecorder.ondataavailable = this.handleDataAvailable;
+
+    this.range = document.getElementById("range_scroll")
+  }
+
+  async loadCurrentFrameData () {
+    let index = this.currentFrame
+
+    // TODO promise?
+
+    // Adding 1ms makes behaviour consistent on firefox and chrome
+    this.video.currentTime = index / this.framerate + 0.001
+
+  }
+
+  async firstFrame() {
+    this.currentFrame = 0
+    await this.loadCurrentFrameData()
+    this.redrawCanvas()
+  }
+
+  async nextFrame() {
+    if (this.currentFrame +1 >= this.frameCount) return
+    this.currentFrame += 1
+    await this.loadCurrentFrameData()
+    this.redrawCanvas()
+  }
+
+  async prevFrame() {
+    if (this.currentFrameIndex <= 0) return
+    this.currentFrame -= 1
+    await this.loadCurrentFrameData()
+    this.redrawCanvas()
+  }
+
+  async goToFrame(id) {
+    this.currentFrame = id
+    await this.loadCurrentFrameData()
+    this.redrawCanvas()
+  }
+
+  async redrawCanvas() {
+    this.clearCtx();
+    this.drawCtx();
+    if (this.poseList[this.currentFrame]) {
+      this.drawResult(this.poseList[this.currentFrame])
+    }
+    this.range.value = this.currentFrame;
   }
 
   drawCtx() {
     this.ctx.drawImage(
-        this.video, 0, 0, this.video.videoWidth, this.video.videoHeight);
+      this.video, 0, 0, this.video.width, this.video.height);
   }
 
   clearCtx() {
-    this.ctx.clearRect(0, 0, this.video.videoWidth, this.video.videoHeight);
+    this.ctx.clearRect(0, 0, this.video.width, this.video.height);
   }
 
   /**
@@ -145,8 +196,19 @@ export class Context {
   handleDataAvailable(event) {
     if (event.data.size > 0) {
       const recordedChunks = [event.data];
+      console.log(event.data)
       // TODO yes i know this doesn't work
       this.videoData = recordedChunks;
+      const blob = new Blob(recordedChunks, {type: 'video/webm'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      document.body.appendChild(a);
+      a.style = 'display: none';
+      a.href = url;
+      a.download = 'pose.webm';
+      a.click();
+      window.URL.revokeObjectURL(url);
+
     }
   }
 }

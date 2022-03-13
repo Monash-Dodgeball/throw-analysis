@@ -28,7 +28,7 @@ export const STATE = {
 
 export const BLAZEPOSE_CONFIG = {
   maxPoses: 1,
-  type: 'lite', // in ['heavy', 'full', 'lite']
+  type: 'heavy', // in ['heavy', 'full', 'lite']
   //scoreThreshold: 0.65,
   scoreThreshold: 0.3,
 };

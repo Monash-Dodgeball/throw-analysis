@@ -26,17 +26,30 @@ limitations under the License.
         <button id="submit">Run</button>
         <button id="downloadVideo">Download Video</button>
         <button id="downloadPose">Download Pose</button>
-        <label for="downloadVideo" style="color:red">DOWNLOAD VIDEO CURRENTLY BROKEN</label>
+        <label for="downloadVideo" style="color:red">DOWNLOAD CURRENTLY BROKEN</label>
       </div>
     </div>
     <div class="container" id="canvas-wrapper">
       <canvas id="output"></canvas>
-      <video id="video">
-        <source id="currentVID" src="" type="video/mp4">
+      <video id="video" hidden preload="auto">
+        <source id="currentVID" type="video/mp4">
       </video>
+      <div class="slidecontainer">
+        <input type="range" min="0" max="0" value="0" class="slider" id="range_scroll">
+      </div>
+    </div>
+    <div>
+      <p class="current_frame" id="current_frame"></p>
+    </div>
+    <div class="controls">
+      <button id="prevFrame">Previous frame</button>
+      <button id="nextFrame">Next frame</button>
+      <label for="fieldFrame">Set frame:</label>
+      <input type="number" id="fieldFrame">
     </div>
     <div class="container">
       <span id="status"></span>
+      <p id="testtext"></p>
     </div>
   </div>
 </body>

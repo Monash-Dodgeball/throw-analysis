@@ -14,11 +14,6 @@
  * limitations under the License.
  * =============================================================================
  */
-// TODO select model type based on device
-// 1. TODO Actually estimate frame-by-frame
-//    TODO i.e. stop using MediaRecorder
-// TODO mediapipe backend
-// TODO Render 3D
 
 import {Context} from './camera.js';
 import {STATE} from './params.js';
@@ -31,8 +26,8 @@ let detector, camera;
 let lastPanelUpdate = 0;
 let rafId;
 const statusElement = document.getElementById('status');
+let frameText = document.getElementById('current_frame')
 
-let poseList = [];
 let poseData = "";
 
 async function createDetector() {
@@ -40,7 +35,7 @@ async function createDetector() {
     case poseDetection.SupportedModels.BlazePose:
       const runtime = "tfjs";
       return poseDetection.createDetector(
-            STATE.model, {runtime, modelType: STATE.modelConfig.type});
+        STATE.model, {runtime, modelType: STATE.modelConfig.type, enableSmoothing: true});
       //const runtime = "mediapipe";
       //return poseDetection.createDetector(STATE.model, {
       //  runtime,
@@ -56,25 +51,10 @@ async function createDetector() {
   }
 }
 
-async function renderResult() {
-  const poses = await detector.estimatePoses(
-      camera.video,
-      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
-
-  // TODO Handle maxposes > 1?
-  poseList.push(poses[0])
-
-  camera.drawCtx();
-  camera.drawResults(poses);
-}
-
-async function checkUpdate() {
-  requestAnimationFrame(checkUpdate);
-};
-
 async function updateVideo(event) {
+  camera.poseList = {};
   // Clear reference to any previous uploaded video.
-  URL.revokeObjectURL(camera.video.currentSrc);
+  URL.revokeObjectURL(camera.source.src)
   const file = event.target.files[0];
   camera.source.src = URL.createObjectURL(file);
 
@@ -95,20 +75,39 @@ async function updateVideo(event) {
   camera.canvas.height = videoHeight;
 
   statusElement.innerHTML = 'Video is loaded.';
+
+  timerCallback()
+
+  camera.frameCount = Math.round(camera.video.duration * camera.framerate)
+  document.getElementById("range_scroll").max = camera.frameCount - 1
+  document.getElementById("range_scroll").style.width = `${videoWidth}px`
+}
+
+function timerCallback() {
+  camera.redrawCanvas()
+  updateUi()
+  requestAnimationFrame(timerCallback)
+}
+
+function updateUi() {
+  frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount}`
 }
 
 async function runFrame() {
-  if (video.paused) {
+  if (camera.currentFrame >= camera.frameCount-1) {
+  //if (video.paused) {
+    console.log(camera.poseList)
     // video has finished.
-    camera.mediaRecorder.stop();
-    camera.clearCtx();
-    camera.video.style.visibility = 'visible';
+    //camera.mediaRecorder.stop();
+    //camera.clearCtx();
+    //camera.video.style.visibility = 'visible';
 
     // Download
+    // TODO Need to update this code
     let data = "frame,name,x2d,y2d,x,y,z,score\n"
-    for (let i = 0; i < poseList.length; i++) {
-      let keypoints = poseList[i].keypoints;
-      let keypoints3D = poseList[i].keypoints3D;
+    for (let i = 0; i < camera.poseList.length; i++) {
+      let keypoints = camera.poseList[i].keypoints;
+      let keypoints3D = camera.poseList[i].keypoints3D;
       for (let j = 0; j < keypoints.length; j++) {
         let obj = keypoints[j];
         let obj3D = keypoints3D[j];
@@ -120,18 +119,43 @@ async function runFrame() {
 
     poseData = data;
 
+    document.getElementById("testtext").textContent = JSON.stringify(camera.poseList)
     return;
   }
-  await renderResult();
-  rafId = requestAnimationFrame(runFrame);
+
+  // Wait for video to be loaded
+
+  //await new Promise(r => setTimeout(r, 1000/camera.framerate));
+
+  await camera.nextFrame();
+
+  //camera.video.load();
+  await new Promise((resolve) => {
+    camera.video.onseeked = () => {
+      resolve(video);
+    };
+  });
+
+  //camera.currentFrame += 1
+  //camera.loadCurrentFrameData()
+  const poses = await detector.estimatePoses(
+      camera.video,
+      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+
+  // TODO Handle maxposes > 1?
+  camera.poseList[camera.currentFrame] = poses[0]
+
+  //rafId = requestAnimationFrame(runFrame);
+  runFrame()
 }
 
 async function run() {
-  poseList = [];
+  camera.poseList = {};
 
   statusElement.innerHTML = 'Warming up model.';
 
   // Warm up model
+  // TODO can/should I do this when detector is created?
   const warmUpTensor =
       tf.fill([camera.video.height, camera.video.width, 3], 0, 'float32');
   await detector.estimatePoses(
@@ -140,17 +164,18 @@ async function run() {
   warmUpTensor.dispose();
   statusElement.innerHTML = 'Model is warmed up.';
 
-  camera.video.style.visibility = 'hidden';
+  //camera.video.style.visibility = 'hidden';
   video.pause();
   video.currentTime = 0;
-  video.play();
-  camera.mediaRecorder.start();
+  //video.play();
+  //camera.mediaRecorder.start();
+  camera.firstFrame();
 
-  await new Promise((resolve) => {
-    camera.video.onseeked = () => {
-      resolve(video);
-    };
-  });
+  //await new Promise((resolve) => {
+  //  camera.video.onseeked = () => {
+  //    resolve(video);
+  //  };
+  //});
 
   await runFrame();
 }
@@ -180,6 +205,7 @@ async function downloadPose() {
   a.download = 'pose.csv';
   a.click();
   window.URL.revokeObjectURL(a.url);
+  console.log(camera.poseList);
 }
 
 async function app() {
@@ -198,7 +224,25 @@ async function app() {
   const downloadPoseButton = document.getElementById('downloadPose')
   downloadPoseButton.onclick = downloadPose;
 
-  checkUpdate();
+  document.getElementById('prevFrame').addEventListener('click', e => {
+    console.log('test')
+    camera.prevFrame()
+  })
+
+  document.getElementById('nextFrame').addEventListener('click', e => {
+    camera.nextFrame()
+  })
+
+  document.getElementById('range_scroll').addEventListener('input', function (e) {
+    let frameId = Number(document.getElementById('range_scroll').value)
+    camera.goToFrame(frameId)
+  })
+
+  document.getElementById('fieldFrame').addEventListener('input', function (e) {
+    let value = Number(document.getElementById('fieldFrame').value)
+    camera.goToFrame(value)
+  })
+
 };
 
 app();
