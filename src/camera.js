@@ -87,6 +87,7 @@ export class Context {
     this.drawCtx();
     if (this.poseList[this.currentFrame]) {
       this.drawResult(this.poseList[this.currentFrame])
+      document.getElementById("testtext").textContent = JSON.stringify(this.poseList[this.currentFrame])
     }
     this.range.value = this.currentFrame;
   }

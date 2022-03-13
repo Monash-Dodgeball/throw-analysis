@@ -71,10 +71,46 @@ async function updateVideo(event) {
   camera.redrawCanvas()
   timerCallback()
 
-  camera.frameCount = Math.round(camera.video.duration * camera.framerate)
-  document.getElementById("range_scroll").max = camera.frameCount - 1
   document.getElementById("range_scroll").style.width = `${videoWidth}px`
 }
+
+// To extract framerate
+const onChangeFile = (mediainfo) => {
+  const file = document.getElementById("videofile").files[0]
+  if (file) {
+
+    const getSize = () => file.size
+
+    const readChunk = (chunkSize, offset) =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          if (event.target.error) {
+            reject(event.target.error)
+          }
+          resolve(new Uint8Array(event.target.result))
+        }
+        reader.readAsArrayBuffer(file.slice(offset, offset + chunkSize))
+      })
+
+    mediainfo
+      .analyzeData(getSize, readChunk)
+      .then((result) => {
+        console.log(result.media.track[1].FrameRate)
+        console.log(result.media.track[1].FrameCount)
+
+        // TODO Make sure track[1] is always correct
+        camera.framerate = result.media.track[1].FrameRate
+        camera.frameCount = result.media.track[1].FrameCount
+        document.getElementById("range_scroll").max = camera.frameCount - 1
+        // Not rounding, in case framerate is non integer
+      })
+      .catch((error) => {
+        // TODO
+      })
+  }
+}
+
 
 function timerCallback() {
   //camera.redrawCanvas()
@@ -83,7 +119,7 @@ function timerCallback() {
 }
 
 function updateUi() {
-  frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount}`
+  frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
 }
 
 async function runFrame() {
@@ -109,7 +145,6 @@ async function runFrame() {
 
     poseData = data;
 
-    document.getElementById("testtext").textContent = JSON.stringify(camera.poseList)
     return;
   }
 
@@ -221,6 +256,11 @@ async function app() {
   document.getElementById('fieldFrame').addEventListener('input', function (e) {
     let value = Number(document.getElementById('fieldFrame').value)
     camera.goToFrame(value)
+  })
+
+  // To extract framerate
+  MediaInfo({ format: 'object' }, (mediainfo) => {
+    document.getElementById("videofile").addEventListener('change', () => onChangeFile(mediainfo))
   })
 
 };
