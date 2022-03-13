@@ -29,6 +29,7 @@ const statusElement = document.getElementById('status');
 let frameText = document.getElementById('current_frame')
 
 let poseData = "";
+let videoData;
 
 async function createDetector() {
   const runtime = "tfjs";
@@ -96,9 +97,6 @@ const onChangeFile = (mediainfo) => {
     mediainfo
       .analyzeData(getSize, readChunk)
       .then((result) => {
-        console.log(result.media.track[1].FrameRate)
-        console.log(result.media.track[1].FrameCount)
-
         // TODO Make sure track[1] is always correct
         camera.framerate = result.media.track[1].FrameRate
         camera.frameCount = result.media.track[1].FrameCount
@@ -123,8 +121,16 @@ function updateUi() {
 }
 
 async function runFrame() {
-  if (camera.currentFrame >= camera.frameCount-1) {
+  // Wait for video to be loaded
+  const poses = await detector.estimatePoses(
+      camera.video,
+      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+
+  camera.poseList[camera.currentFrame] = poses[0]
+
+  if (camera.currentFrame >= camera.frameCount - 1) {
     // video has finished
+    camera.stop()
 
     // For download
     let data = "frame,name,x2d,y2d,x,y,z,score\n"
@@ -148,26 +154,10 @@ async function runFrame() {
     return;
   }
 
-  // Wait for video to be loaded
-  const poses = await detector.estimatePoses(
-      camera.video,
-      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
-
-  camera.poseList[camera.currentFrame] = poses[0]
-
   // Reordering of camera.nextFrame so that poses get drawn for current frame
   camera.redrawCanvas()
   camera.currentFrame += 1
-  camera.loadCurrentFrameData()
-
-  /* TODO For some reason this seeems to be required, despite the same
-   * code being in camera.loadCurrentFrameData()
-   */
-  await new Promise((resolve) => {
-    camera.video.onseeked = () => {
-      resolve(video);
-    };
-  });
+  await camera.loadCurrentFrameData()
 
   runFrame()
 }
@@ -187,7 +177,7 @@ async function run() {
   warmUpTensor.dispose();
   statusElement.innerHTML = 'Model is warmed up.';
 
-  //camera.mediaRecorder.start();
+  camera.start();
   camera.firstFrame();
 
   await new Promise((resolve) => {
@@ -200,16 +190,8 @@ async function run() {
 }
 
 async function downloadVideo() {
-  console.log(camera.videoData)
-  const blob = new Blob(camera.videoData, {type: 'video/webm'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  document.body.appendChild(a);
-  a.style = 'display: none';
-  a.href = url;
-  a.download = 'pose.webm';
+  let a = document.getElementById("videodata")
   a.click();
-  window.URL.revokeObjectURL(url);
 }
 
 async function downloadPose() {

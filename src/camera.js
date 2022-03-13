@@ -26,6 +26,7 @@ export class Context {
     this.frameCount = 40; // TODO
     this.framerate = 15;
     this.poseList = {};
+
     const stream = this.canvas.captureStream();
 
     // Hack to get vp9 to work on firefox
@@ -201,19 +202,21 @@ export class Context {
   handleDataAvailable(event) {
     if (event.data.size > 0) {
       const recordedChunks = [event.data];
-      console.log(event.data)
-      // TODO yes i know this doesn't work
-      this.videoData = recordedChunks;
-      const blob = new Blob(recordedChunks, {type: 'video/webm'});
+      const blob = new Blob(recordedChunks, {type: 'video/mp4'});
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      document.body.appendChild(a);
-      a.style = 'display: none';
-      a.href = url;
-      a.download = 'pose.webm';
-      a.click();
-      window.URL.revokeObjectURL(url);
 
+      let a = document.getElementById('videodata');
+      if (a) {
+        window.URL.revokeObjectURL(a.href);
+      } else {
+        a = document.createElement('a');
+        a.setAttribute("id", "videodata")
+        document.body.appendChild(a);
+        a.style = 'display: none';
+        a.download = 'pose.mp4';
+      }
+
+      a.href = url;
     }
   }
 }
