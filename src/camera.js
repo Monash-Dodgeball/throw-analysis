@@ -79,10 +79,14 @@ export class Context {
     this.drawFrame();
     // Draw pose for current frame if it exists
     if (this.poseList[this.currentFrame]) {
-      this.drawResult(this.poseList[this.currentFrame])
+      // Draw overlay
+      this.drawOverlay();
+
+      // Draw pose
+      this.drawResult(this.poseList[this.currentFrame]);
 
       // TODO remove below when actually doing something with pose infomation
-      document.getElementById("testtext").textContent = JSON.stringify(this.poseList[this.currentFrame])
+      document.getElementById("testtext").textContent = JSON.stringify(this.poseList[this.currentFrame]);
     }
   }
 
@@ -95,6 +99,27 @@ export class Context {
   /* Clear canvas */
   clearCtx() {
     this.ctx.clearRect(0, 0, this.video.width, this.video.height);
+  }
+
+  /*
+   * Draws overlay details.
+   * Currently just a basic test example.
+   */
+  drawOverlay() {
+    let pose = this.poseList[this.currentFrame];
+    let elbow = pose.keypoints[14];
+    let elbow3D = pose.keypoints3D[14];
+
+    // Draw text
+    let string = `Left elbow: x = ${elbow3D.x}, y = ${elbow3D.y}, z = ${elbow3D.x}`;
+    this.ctx.fillStyle = 'red';
+    this.ctx.fillText(string, 10, 20);
+
+    // Draw circle
+    this.ctx.strokeStyle = 'red';
+    this.ctx.beginPath();
+    this.ctx.arc(elbow.x, elbow.y, 12, 0, 2 * Math.PI);
+    this.ctx.stroke();
   }
 
   /*
