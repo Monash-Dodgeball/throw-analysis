@@ -1,5 +1,5 @@
-# Throw-Analysis
-Code mainly lifted from [here](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/demos).
+# Throw Analysis
+Some code lifted from [here](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/demos).
 
 Site available here https://monash-dodgeball.github.io/throw-analysis/index.html.
 
@@ -30,7 +30,7 @@ Each pose contains:
 
 For `keypoints3D`, x, y and z represent distance in a 2 x 2 x 2 meter cubic space. The range for each coordinat is from -1 to 1. The z-axis is always perpendicular to the xy-plane that passes through the center of the hip, so the coordinate for the hip center is (0, 0, 0).
 
-## BlazePose Keypoints:
+## BlazePose Keypoints
 
 ![image](https://user-images.githubusercontent.com/11014229/162218093-1dee7d85-db41-45c1-8757-4625a128e7f8.png)
 
