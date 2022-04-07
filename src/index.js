@@ -210,17 +210,21 @@ async function app() {
   detector = await createDetector();
   camera = new Context();
 
-  const runButton = document.getElementById('submit');
-  runButton.onclick = run;
+  document.getElementById('submit').addEventListener('click', (e) => {
+    run();
+  })
 
-  const uploadButton = document.getElementById('videofile');
-  uploadButton.onchange = updateVideo;
+  document.getElementById('videofile').addEventListener('change', (e) => {
+    updateVideo();
+  })
 
-  const downloadVideoButton = document.getElementById('downloadVideo')
-  downloadVideoButton.onclick = downloadVideo;
+  document.getElementById('downloadVideo').addEventListener('click', (e) => {
+    downloadVideo();
+  })
 
-  const downloadPoseButton = document.getElementById('downloadPose')
-  downloadPoseButton.onclick = downloadPose;
+  document.getElementById('downloadPose').addEventListener('click', (e) => {
+    downloadPose();
+  })
 
   document.getElementById('prevFrame').addEventListener('click', e => {
     camera.prevFrame()
@@ -244,7 +248,6 @@ async function app() {
   MediaInfo({ format: 'object' }, (mediainfo) => {
     document.getElementById("videofile").addEventListener('change', () => onChangeFile(mediainfo))
   })
-
 };
 
 app();
