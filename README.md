@@ -21,7 +21,7 @@ Each pose contains:
     - `x`: The x coordinate given in pixels
     - `y`: The y coordinate given in pixels
     - `z`: I have no idea what this coordinate is for
-- `keypoints3D
+- `keypoints3D`:
     - `name`: 
     - `score`: The model's confidence that this is in fact a keypoint
     - `x`: The x coordinate
