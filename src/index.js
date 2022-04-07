@@ -11,6 +11,7 @@ tf.wasm.setWasmPaths(
 let detector, camera;
 const statusElement = document.getElementById('status');
 const frameText = document.getElementById('current_frame')
+const scrubber = document.getElementById('range_scroll')
 let poseData;
 
 
@@ -59,6 +60,7 @@ async function runFrame() {
   camera.currentFrame += 1
   await camera.loadCurrentFrameData()
   frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
+  scrubber.value = camera.currentFrame;
 
   runFrame()
 }
@@ -220,23 +222,27 @@ async function app() {
   document.getElementById('prevFrame').addEventListener('click', (e) => {
     camera.prevFrame();
     frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
+    scrubber.value = camera.currentFrame;
   });
 
   document.getElementById('nextFrame').addEventListener('click', (e) => {
     camera.nextFrame();
     frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
+    scrubber.value = camera.currentFrame;
   });
 
   document.getElementById('range_scroll').addEventListener('input', function (e) {
     let frameId = Number(document.getElementById('range_scroll').value)
     camera.goToFrame(frameId)
     frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
+    scrubber.value = camera.currentFrame;
   })
 
   document.getElementById('fieldFrame').addEventListener('input', function (e) {
     let value = Number(document.getElementById('fieldFrame').value)
     camera.goToFrame(value)
     frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
+    scrubber.value = camera.currentFrame;
   })
 
   // To extract framerate

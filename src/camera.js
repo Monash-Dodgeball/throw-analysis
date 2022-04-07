@@ -37,19 +37,16 @@ export class Context {
       options = {mimeType: 'video/webm; codecs=vp9'};
     }
 
+    // For converting canvas to video
     this.mediaRecorder = new MediaRecorder(stream, options);
     this.mediaRecorder.ondataavailable = this.handleDataAvailable;
-
-    this.range = document.getElementById("range_scroll")
   }
 
-  async loadCurrentFrameData () {
-    let index = this.currentFrame
-
+  /* Forces video to seek to current frame */
+  async loadCurrentFrameData() {
     // Adding 1ms makes behaviour consistent on firefox and chrome
-    this.video.currentTime = index / this.framerate + 0.001
+    this.video.currentTime = this.currentFrame / this.framerate + 0.001
 
-    // TODO seems to make scrubber less smooth sometimes
     await new Promise((resolve) => {
       this.video.onseeked = () => {
         resolve(video);
@@ -57,12 +54,14 @@ export class Context {
     });
   }
 
+  /* Seek to first frame */
   async firstFrame() {
     this.currentFrame = 0
     await this.loadCurrentFrameData()
     this.redrawCanvas()
   }
 
+  /* Seek to next frame */
   async nextFrame() {
     if (this.currentFrame +1 >= this.frameCount) return
     this.currentFrame += 1
@@ -70,6 +69,7 @@ export class Context {
     this.redrawCanvas()
   }
 
+  /* Seek to previous frame */
   async prevFrame() {
     if (this.currentFrameIndex <= 0) return
     this.currentFrame -= 1
@@ -77,30 +77,64 @@ export class Context {
     this.redrawCanvas()
   }
 
+  /* Jump to frame specified by id */
   async goToFrame(id) {
     this.currentFrame = id
     await this.loadCurrentFrameData()
     this.redrawCanvas()
   }
 
+  /* Draws all necessary data for current frame */
   async redrawCanvas() {
     this.clearCtx();
-    this.drawCtx();
+    this.drawFrame();
+    // Draw pose for current frame if it exists
     if (this.poseList[this.currentFrame]) {
       this.drawResult(this.poseList[this.currentFrame])
+
+      // TODO remove below when actually doing something with pose infomation
       document.getElementById("testtext").textContent = JSON.stringify(this.poseList[this.currentFrame])
     }
-    this.range.value = this.currentFrame;
   }
 
-  drawCtx() {
+  /* Draw current frame of video */
+  drawFrame() {
     this.ctx.drawImage(
       this.video, 0, 0, this.video.width, this.video.height);
   }
 
+  /* Clear canvas */
   clearCtx() {
     this.ctx.clearRect(0, 0, this.video.width, this.video.height);
   }
+
+  /*
+   * Captures data from canvas/MediaRecorder and readies data for downloading
+   */
+  handleDataAvailable(event) {
+    if (event.data.size > 0) {
+      const recordedChunks = [event.data];
+      const blob = new Blob(recordedChunks, {type: 'video/mp4'});
+      const url = URL.createObjectURL(blob);
+
+      let a = document.getElementById('videodata');
+      if (a) {
+        window.URL.revokeObjectURL(a.href);
+      } else {
+        a = document.createElement('a');
+        a.setAttribute("id", "videodata")
+        document.body.appendChild(a);
+        a.style = 'display: none';
+        a.download = 'pose.mp4';
+      }
+
+      a.href = url;
+    }
+  }
+
+  /*
+   * Below code is used for drawing poses, basically unmodified from source
+   */
 
   /**
    * Draw the keypoints and skeleton on the video.
@@ -199,24 +233,4 @@ export class Context {
     this.mediaRecorder.stop();
   }
 
-  handleDataAvailable(event) {
-    if (event.data.size > 0) {
-      const recordedChunks = [event.data];
-      const blob = new Blob(recordedChunks, {type: 'video/mp4'});
-      const url = URL.createObjectURL(blob);
-
-      let a = document.getElementById('videodata');
-      if (a) {
-        window.URL.revokeObjectURL(a.href);
-      } else {
-        a = document.createElement('a');
-        a.setAttribute("id", "videodata")
-        document.body.appendChild(a);
-        a.style = 'display: none';
-        a.download = 'pose.mp4';
-      }
-
-      a.href = url;
-    }
-  }
 }
