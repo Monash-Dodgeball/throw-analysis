@@ -19,6 +19,7 @@ const statusElement = document.getElementById('status');
 const frameText = document.getElementById('current_frame')
 const scrubber = document.getElementById('range_scroll')
 let poseData;
+let paused = true; // For play button
 
 
 /*
@@ -106,6 +107,38 @@ async function run() {
 
   // Begin generation of poses
   await runFrame();
+}
+
+
+/*
+ * Simulates playing the video by advancing frame according to framerate
+ * This allows overlay to keep up with video
+ */
+async function playVideo() {
+  // get time
+  let startTime = performance.now()
+
+  // TODO Remove wait when loading issue is fixed
+  await camera.nextFrame();
+  frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
+  scrubber.value = camera.currentFrame;
+
+  let endTime = performance.now()
+
+  // minus get time
+  await new Promise(r => setTimeout(r, 1000/camera.framerate - (endTime - startTime)));
+  //console.log(endTime-startTime)
+
+  if (camera.currentFrame+1 >= camera.frameCount) {
+    paused = true;
+    document.getElementById('play').innerHTML = "Play";
+  }
+
+  if (paused) {
+    return;
+  } else {
+    playVideo()
+  }
 }
 
 
@@ -237,6 +270,20 @@ async function app() {
     camera.nextFrame();
     frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
     scrubber.value = camera.currentFrame;
+    document.getElementById('play').innerHTML = "Play";
+  });
+
+  document.getElementById('play').addEventListener('click', async (e) => {
+    paused = !paused;
+    let button = document.getElementById('play');
+
+    if (button.innerHTML == "Play") {
+      button.innerHTML = "Pause"
+    } else {
+      button.innerHTML = "Play"
+    }
+
+    await playVideo();
   });
 
   document.getElementById('range_scroll').addEventListener('input', function (e) {
