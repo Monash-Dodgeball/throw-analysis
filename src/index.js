@@ -3,14 +3,16 @@
  */
 
 import {Context} from './camera.js';
-import {STATE} from './params.js';
+import {STATE, MEDIAPIPE} from './params.js';
 import * as utils from './util.js';
 
 
 // For mediapipe backend
-tf.wasm.setWasmPaths(
+if (MEDIAPIPE) {
+  tf.wasm.setWasmPaths(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
-        tf.wasm.version_wasm}/dist/`);
+      tf.wasm.version_wasm}/dist/`);
+}
 
 let detector, camera;
 const statusElement = document.getElementById('status');
@@ -23,16 +25,18 @@ let poseData;
  * Create the detector object.
  */
 async function createDetector() {
-  const runtime = "tfjs";
-  return poseDetection.createDetector(
-    STATE.model, {runtime, modelType: STATE.modelConfig.type, enableSmoothing: true});
-  // Uncomment below for mediapipe backend
-  //const runtime = "mediapipe";
-  //return poseDetection.createDetector(STATE.model, {
-  //  runtime,
-  //  modelType: STATE.modelConfig.type,
-  //  solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@{VERSION}`
-  //})
+  if (!MEDIAPIPE) {
+    const runtime = "tfjs";
+    return poseDetection.createDetector(
+      STATE.model, {runtime, modelType: STATE.modelConfig.type, enableSmoothing: true});
+  } else {
+    const runtime = "mediapipe";
+    return poseDetection.createDetector(STATE.model, {
+      runtime,
+      modelType: STATE.modelConfig.type,
+      solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@{VERSION}`
+    })
+  }
 }
 
 /*
