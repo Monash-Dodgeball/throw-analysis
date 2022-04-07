@@ -17,24 +17,28 @@
 
 import {Context} from './camera.js';
 import {STATE} from './params.js';
+import * as utils from './util.js';
 
+
+// For mediapipe backend
 tf.wasm.setWasmPaths(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
         tf.wasm.version_wasm}/dist/`);
 
 let detector, camera;
-let lastPanelUpdate = 0;
-let rafId;
 const statusElement = document.getElementById('status');
-let frameText = document.getElementById('current_frame')
+const frameText = document.getElementById('current_frame')
+let poseData;
 
-let poseData = "";
-let videoData;
 
+/*
+ * Create the detector object.
+ */
 async function createDetector() {
   const runtime = "tfjs";
   return poseDetection.createDetector(
     STATE.model, {runtime, modelType: STATE.modelConfig.type, enableSmoothing: true});
+  // Uncomment below for mediapipe backend
   //const runtime = "mediapipe";
   //return poseDetection.createDetector(STATE.model, {
   //  runtime,
@@ -43,9 +47,109 @@ async function createDetector() {
   //})
 }
 
+/*
+ * Auxiliary function for run().
+ * Each recursion generates pose for current frame.
+ */
+async function runFrame() {
+  // Generate pose for current frame
+  const poses = await detector.estimatePoses(
+      camera.video,
+      {maxPoses: STATE.modelConfig.maxPoses,
+       flipHorizontal: false});
 
-async function updateVideo(event) {
+  // Add new pose to list
+  camera.poseList[camera.currentFrame] = poses[0]
+
+  // If video has finished
+  if (camera.currentFrame >= camera.frameCount - 1) {
+    camera.stop()
+
+    // For download
+    poseData = utils.poseToCSV(camera.poseList, camera.frameCount);
+
+    return;
+  }
+
+  // camera.nextFrame, but reordered so that poses get drawn for current frame
+  camera.redrawCanvas()
+  camera.currentFrame += 1
+  await camera.loadCurrentFrameData()
+  frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
+
+  runFrame()
+}
+
+
+/*
+ * Prepare app for detecting poses, then begin processing
+ */
+async function run() {
+  // Clear any previous pose data
   camera.poseList = {};
+
+  statusElement.innerHTML = 'Warming up model.';
+
+  // Warm up model
+  // TODO can/should this be done when detector is created?
+  const warmUpTensor =
+      tf.fill([camera.video.height, camera.video.width, 3], 0, 'float32');
+  await detector.estimatePoses(
+      warmUpTensor,
+      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+  warmUpTensor.dispose();
+
+  statusElement.innerHTML = 'Model is warmed up.';
+
+  camera.start();
+  camera.firstFrame();
+
+  // Wait for video to load
+  await new Promise((resolve) => {
+    camera.video.onseeked = () => {
+      resolve(video);
+    };
+  });
+
+  // Begin generation of poses
+  await runFrame();
+}
+
+
+/*
+ * Downloads video data from camera.
+ */
+async function downloadVideo() {
+  // Similar to downloadPose, but split between
+  // here and camera.handleDataAvailable
+  let a = document.getElementById("videodata")
+  a.click();
+}
+
+
+/*
+ * Downloads pose data.
+ */
+async function downloadPose() {
+  const blob = new Blob([poseData], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  document.body.appendChild(a);
+  a.style = 'display: none';
+  a.href = url;
+  a.download = 'pose.csv';
+  a.click();
+  window.URL.revokeObjectURL(a.url);
+}
+
+
+/*
+ * Update/reset app when video file is changed
+ */
+async function updateVideo(event) {
+  // Clear any previous poses
+  camera.poseList = {};
+
   // Clear reference to any previous uploaded video.
   URL.revokeObjectURL(camera.source.src)
   const file = event.target.files[0];
@@ -59,6 +163,7 @@ async function updateVideo(event) {
     };
   });
 
+  // Update canvas dimensions
   const videoWidth = camera.video.videoWidth;
   const videoHeight = camera.video.videoHeight;
   // Must set below two lines, otherwise video element doesn't show.
@@ -69,17 +174,21 @@ async function updateVideo(event) {
 
   statusElement.innerHTML = 'Video is loaded.';
 
+  // Draw first frame
   camera.redrawCanvas()
-  timerCallback()
 
+  // Update width of scrubber
   document.getElementById("range_scroll").style.width = `${videoWidth}px`
 }
 
-// To extract framerate
+
+/*
+ * Used to extract framerate from new video
+ * See https://github.com/buzz/mediainfo.js/blob/master/examples/browser-simple/example.js
+ */
 const onChangeFile = (mediainfo) => {
   const file = document.getElementById("videofile").files[0]
   if (file) {
-
     const getSize = () => file.size
 
     const readChunk = (chunkSize, offset) =>
@@ -110,141 +219,45 @@ const onChangeFile = (mediainfo) => {
 }
 
 
-function timerCallback() {
-  //camera.redrawCanvas()
-  updateUi()
-  requestAnimationFrame(timerCallback)
-}
-
-function updateUi() {
-  frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
-}
-
-async function runFrame() {
-  // Wait for video to be loaded
-  const poses = await detector.estimatePoses(
-      camera.video,
-      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
-
-  camera.poseList[camera.currentFrame] = poses[0]
-
-  if (camera.currentFrame >= camera.frameCount - 1) {
-    // video has finished
-    camera.stop()
-
-    // For download
-    let data = "frame,name,x2d,y2d,x,y,z,score\n"
-    for (let i = 0; i < camera.frameCount; i++) {
-      if (!camera.poseList[i]) {
-        continue;
-      }
-      let keypoints = camera.poseList[i].keypoints;
-      let keypoints3D = camera.poseList[i].keypoints3D;
-      for (let j = 0; j < keypoints.length; j++) {
-        let obj = keypoints[j];
-        let obj3D = keypoints3D[j];
-        let row = [i, obj.name, obj.x, obj.y, obj3D.x,
-                   obj3D.y, obj3D.z, obj3D.score].join(",");
-        data += row + "\n"
-      }
-    }
-
-    poseData = data;
-
-    return;
-  }
-
-  // Reordering of camera.nextFrame so that poses get drawn for current frame
-  camera.redrawCanvas()
-  camera.currentFrame += 1
-  await camera.loadCurrentFrameData()
-
-  runFrame()
-}
-
-async function run() {
-  camera.poseList = {};
-
-  statusElement.innerHTML = 'Warming up model.';
-
-  // Warm up model
-  // TODO can/should I do this when detector is created?
-  const warmUpTensor =
-      tf.fill([camera.video.height, camera.video.width, 3], 0, 'float32');
-  await detector.estimatePoses(
-      warmUpTensor,
-      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
-  warmUpTensor.dispose();
-  statusElement.innerHTML = 'Model is warmed up.';
-
-  camera.start();
-  camera.firstFrame();
-
-  await new Promise((resolve) => {
-    camera.video.onseeked = () => {
-      resolve(video);
-    };
-  });
-
-  await runFrame();
-}
-
-async function downloadVideo() {
-  let a = document.getElementById("videodata")
-  a.click();
-}
-
-async function downloadPose() {
-  const blob = new Blob([poseData], {type: 'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  document.body.appendChild(a);
-  a.style = 'display: none';
-  a.href = url;
-  a.download = 'pose.csv';
-  a.click();
-  window.URL.revokeObjectURL(a.url);
-}
-
+/*
+ * Initializes detector, camera, and event listeners.
+ */
 async function app() {
   detector = await createDetector();
   camera = new Context();
 
-  document.getElementById('submit').addEventListener('click', (e) => {
-    run();
-  })
+  document.getElementById('submit').addEventListener('click', run);
 
-  document.getElementById('videofile').addEventListener('change', (e) => {
-    updateVideo();
-  })
+  document.getElementById('videofile').addEventListener('change', updateVideo);
 
-  document.getElementById('downloadVideo').addEventListener('click', (e) => {
-    downloadVideo();
-  })
+  document.getElementById('downloadVideo').addEventListener('click', downloadVideo);
 
-  document.getElementById('downloadPose').addEventListener('click', (e) => {
-    downloadPose();
-  })
+  document.getElementById('downloadPose').addEventListener('click', downloadPose);
 
-  document.getElementById('prevFrame').addEventListener('click', e => {
-    camera.prevFrame()
-  })
+  document.getElementById('prevFrame').addEventListener('click', (e) => {
+    camera.prevFrame();
+    frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
+  });
 
-  document.getElementById('nextFrame').addEventListener('click', e => {
-    camera.nextFrame()
-  })
+  document.getElementById('nextFrame').addEventListener('click', (e) => {
+    camera.nextFrame();
+    frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
+  });
 
   document.getElementById('range_scroll').addEventListener('input', function (e) {
     let frameId = Number(document.getElementById('range_scroll').value)
     camera.goToFrame(frameId)
+    frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
   })
 
   document.getElementById('fieldFrame').addEventListener('input', function (e) {
     let value = Number(document.getElementById('fieldFrame').value)
     camera.goToFrame(value)
+    frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
   })
 
   // To extract framerate
+  // https://github.com/buzz/mediainfo.js/blob/master/examples/browser-simple/example.js
   MediaInfo({ format: 'object' }, (mediainfo) => {
     document.getElementById("videofile").addEventListener('change', () => onChangeFile(mediainfo))
   })
