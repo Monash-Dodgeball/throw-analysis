@@ -15,14 +15,14 @@ After pose generation has finished running, pose data for frame `i` is stored in
 
 Each pose contains:
 - `score`: Overall score? I'm not entirely sure how it's defined
-- `keypoints`:
-    - `name`: The name of the specific keypoint (e.g. `left_elbow`
+- `keypoints`: A list of keypoint obejcts sorted according to the image below, containing:
+    - `name`: The name of the specific keypoint (e.g. `left_elbow`)
     - `score`: The model's confidence that this is in fact a keypoint
     - `x`: The x coordinate given in pixels
     - `y`: The y coordinate given in pixels
     - `z`: I have no idea what this coordinate is for
-- `keypoints3D`:
-    - `name`: 
+- `keypoints3D`: A list of 3D keypoint objects sorted according to the image below, containing:
+    - `name`: The name of the specific keypoint (e.g. `left_elbow`)
     - `score`: The model's confidence that this is in fact a keypoint
     - `x`: The x coordinate
     - `y`: The y coordinate
