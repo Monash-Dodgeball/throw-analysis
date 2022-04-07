@@ -4,6 +4,7 @@
  */
 
 import * as params from './params.js';
+import * as utils from './util.js';
 
 export class Context {
   constructor() {
@@ -79,11 +80,11 @@ export class Context {
     this.drawFrame();
     // Draw pose for current frame if it exists
     if (this.poseList[this.currentFrame]) {
-      // Draw overlay
-      this.drawOverlay();
-
       // Draw pose
       this.drawResult(this.poseList[this.currentFrame]);
+
+      // Draw overlay
+      this.drawOverlay();
 
       // TODO remove below when actually doing something with pose infomation
       document.getElementById("testtext").textContent = JSON.stringify(this.poseList[this.currentFrame]);
@@ -107,8 +108,9 @@ export class Context {
    */
   drawOverlay() {
     let pose = this.poseList[this.currentFrame];
-    let elbow = pose.keypoints[14];
-    let elbow3D = pose.keypoints3D[14];
+    let id = utils.kpNameMap['right_elbow']
+    let elbow = pose.keypoints[id];
+    let elbow3D = pose.keypoints3D[id];
 
     // Draw text
     let string = `Left elbow: x = ${elbow3D.x}, y = ${elbow3D.y}, z = ${elbow3D.x}`;
