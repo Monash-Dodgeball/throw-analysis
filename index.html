@@ -1,14 +1,3 @@
-<!-- Copyright 2021 Google LLC. All Rights Reserved.
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-==============================================================================-->
 <!DOCTYPE html>
 <html>
 <head>
@@ -28,6 +17,7 @@ limitations under the License.
         <button id="downloadPose">Download Pose</button>
       </div>
     </div>
+
     <div class="container" id="canvas-wrapper">
       <canvas id="output"></canvas>
       <video id="video" hidden preload="auto">
@@ -37,21 +27,25 @@ limitations under the License.
         <input type="range" min="0" max="0" value="0" class="slider" id="range_scroll">
       </div>
     </div>
+
     <div>
       <p class="current_frame" id="current_frame"></p>
     </div>
+
     <div class="controls">
       <button id="prevFrame">Previous frame</button>
       <button id="nextFrame">Next frame</button>
       <label for="fieldFrame">Set frame:</label>
       <input type="number" id="fieldFrame">
     </div>
+
     <div class="container">
       <span id="status"></span>
       <p id="testtext"></p>
     </div>
   </div>
 </body>
+
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
 <!-- TODO Fix this -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"> </script>
@@ -71,4 +65,5 @@ limitations under the License.
   type="text/javascript"
   src="https://unpkg.com/mediainfo.js/dist/mediainfo.min.js"
 ></script>
+
 </html>
