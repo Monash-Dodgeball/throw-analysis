@@ -1,3 +1,7 @@
+/*
+ * Put any miscellaneous functions here.
+ */
+
 export function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
   const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);

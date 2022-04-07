@@ -1,3 +1,7 @@
+/*
+ * Initializes and controls any app logic
+ */
+
 import {Context} from './camera.js';
 import {STATE} from './params.js';
 import * as utils from './util.js';

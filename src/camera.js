@@ -1,3 +1,8 @@
+/*
+ * Defines the Context class, used for interfacing with the video.
+ * Also used for drawing the overlay on top of the video
+ */
+
 import * as params from './params.js';
 
 export class Context {

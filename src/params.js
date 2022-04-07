@@ -1,3 +1,7 @@
+/*
+ * Put all global parameters here for easy modification.
+ */
+
 export const STATE = {
   backend: 'tfjs-webgl',
   flags: {},
