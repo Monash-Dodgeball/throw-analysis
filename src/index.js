@@ -210,7 +210,7 @@ async function updateVideo(event) {
   statusElement.innerHTML = 'Video is loaded.';
 
   // Draw first frame
-  camera.redrawCanvas()
+  camera.redrawCanvas();
 
   // Update width of scrubber
   document.getElementById("range_scroll").style.width = `${videoWidth}px`
@@ -245,6 +245,7 @@ const onChangeFile = (mediainfo) => {
         camera.framerate = result.media.track[1].FrameRate
         camera.frameCount = result.media.track[1].FrameCount
         document.getElementById("range_scroll").max = camera.frameCount - 1
+        updateUI();
         // Not rounding, in case framerate is non integer
       })
       .catch((error) => {
