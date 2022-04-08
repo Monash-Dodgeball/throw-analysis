@@ -18,6 +18,7 @@ let detector, camera;
 const statusElement = document.getElementById('status');
 const frameText = document.getElementById('current_frame')
 const scrubber = document.getElementById('range_scroll')
+const playButton = document.getElementById('play')
 let poseData;
 let paused = true; // For play button
 
@@ -68,8 +69,7 @@ async function runFrame() {
   camera.redrawCanvas()
   camera.currentFrame += 1
   await camera.loadCurrentFrameData()
-  frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
-  scrubber.value = camera.currentFrame;
+  updateUI();
 
   runFrame()
 }
@@ -110,6 +110,14 @@ async function run() {
 }
 
 
+async function updateUI() {
+  frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
+  scrubber.value = camera.currentFrame;
+  playButton.innerHTML = "Play"
+  paused = true;
+}
+
+
 /*
  * Simulates playing the video by advancing frame according to framerate
  * This allows overlay to keep up with video
@@ -120,8 +128,6 @@ async function playVideo() {
 
   // TODO Remove wait when loading issue is fixed
   await camera.nextFrame();
-  frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
-  scrubber.value = camera.currentFrame;
 
   let endTime = performance.now()
 
@@ -137,6 +143,9 @@ async function playVideo() {
   if (paused) {
     return;
   } else {
+    updateUI();
+    playButton.innerHTML = "Pause"
+    paused = false;
     playVideo()
   }
 }
@@ -262,15 +271,12 @@ async function app() {
 
   document.getElementById('prevFrame').addEventListener('click', (e) => {
     camera.prevFrame();
-    frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
-    scrubber.value = camera.currentFrame;
+    updateUI();
   });
 
   document.getElementById('nextFrame').addEventListener('click', (e) => {
     camera.nextFrame();
-    frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
-    scrubber.value = camera.currentFrame;
-    document.getElementById('play').innerHTML = "Play";
+    updateUI();
   });
 
   document.getElementById('play').addEventListener('click', async (e) => {
@@ -289,15 +295,13 @@ async function app() {
   document.getElementById('range_scroll').addEventListener('input', function (e) {
     let frameId = Number(document.getElementById('range_scroll').value)
     camera.goToFrame(frameId)
-    frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
-    scrubber.value = camera.currentFrame;
+    updateUI();
   })
 
   document.getElementById('fieldFrame').addEventListener('input', function (e) {
     let value = Number(document.getElementById('fieldFrame').value)
     camera.goToFrame(value)
-    frameText.textContent = `Current Frame: ${camera.currentFrame}/${camera.frameCount-1}`
-    scrubber.value = camera.currentFrame;
+    updateUI();
   })
 
   // To extract framerate
