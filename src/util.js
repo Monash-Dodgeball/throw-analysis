@@ -35,6 +35,12 @@ export function poseToJSON(poseList) {
   return poseJSON
 }
 
+/* Converts pose JSON string to object */
+export function jsonToPose(poseJSON) {
+  let pose = JSON.parse(poseJSON)
+  return pose
+}
+
 /* Maps keypoint name to index */
 export const kpNameMap = {
   'nose':             0,
