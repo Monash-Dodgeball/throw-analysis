@@ -172,7 +172,7 @@ async function downloadPose() {
   document.body.appendChild(a);
   a.style = 'display: none';
   a.href = url;
-  a.download = 'pose.csv';
+  a.download = 'pose.json';
   a.click();
   window.URL.revokeObjectURL(a.url);
 }
