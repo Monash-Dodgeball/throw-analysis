@@ -60,7 +60,7 @@ async function runFrame() {
     camera.stop()
 
     // For download
-    poseData = utils.poseToCSV(camera.poseList, camera.frameCount);
+    poseData = utils.poseToJSON(camera.poseList);
 
     return;
   }

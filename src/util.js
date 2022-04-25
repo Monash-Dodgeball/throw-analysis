@@ -29,6 +29,12 @@ export function poseToCSV(poseList, frameCount) {
   return data;
 }
 
+/* Converts pose data to JSON format for download */
+export function poseToJSON(poseList) {
+  let poseJSON = JSON.stringify(poseList)
+  return poseJSON
+}
+
 /* Maps keypoint name to index */
 export const kpNameMap = {
   'nose':             0,
