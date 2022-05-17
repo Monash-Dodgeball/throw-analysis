@@ -122,6 +122,30 @@ export class Context {
     this.ctx.beginPath();
     this.ctx.arc(elbow.x, elbow.y, 12, 0, 2 * Math.PI);
     this.ctx.stroke();
+
+    this.drawPath('left_elbow')
+  }
+
+  /*
+   * Draws path joint name has taken until current frame.
+   */
+  drawPath(joint) {
+    let id = utils.kpNameMap[joint];
+
+    this.ctx.strokeStyle = 'blue';
+    this.ctx.beginPath();
+
+    let pose = this.poseList[0];
+    let elbow = pose.keypoints[id];
+    this.ctx.moveTo(elbow.x, elbow.y);
+
+    for (let i = 1; i < this.currentFrame; i++) {
+      pose = this.poseList[i];
+      elbow = pose.keypoints[id];
+      this.ctx.lineTo(elbow.x, elbow.y);
+    }
+
+    this.ctx.stroke();
   }
 
   /*
