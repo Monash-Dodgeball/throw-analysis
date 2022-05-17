@@ -142,7 +142,8 @@ export class Context {
     this.ctx.stroke();
 
     // TODO possibly smooth, based on velocity
-    for (let i = 1; i < this.currentFrame; i++) {
+    // I have no idea why we need to do currentFrame+1
+    for (let i = 1; i <= this.currentFrame+1; i++) {
       let new_pose = this.poseList[i];
       let new_elbow = pose.keypoints[id];
 
