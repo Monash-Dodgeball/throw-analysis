@@ -21,7 +21,6 @@ export class Context {
 
     this.scatterGLEl = document.querySelector('#scatter-gl-container');
     this.scatterGL = new ScatterGL(this.scatterGLEl, {
-      'rotateOnStart': true,
       'selectEnabled': false,
       'styles': {polyline: {defaultOpacity: 1, deselectedOpacity: 1}}
     });
@@ -186,7 +185,8 @@ export class Context {
       this.drawKeypoints(pose.keypoints);
       this.drawSkeleton(pose.keypoints);
     }
-    if (pose.keypoints3D != null && params.render3D) {
+    if (pose.keypoints3D != null && params.render3D &&
+        this.mediaRecorder.state != 'recording') {
       this.drawKeypoints3D(pose.keypoints3D);
     }
   }
