@@ -4,6 +4,7 @@
 
 import {Context} from './camera.js';
 import {STATE, MEDIAPIPE} from './params.js';
+import * as params from './params.js';
 import * as utils from './util.js';
 
 
@@ -214,6 +215,15 @@ async function updateVideo(event) {
 
   // Update width of scrubber
   document.getElementById("range_scroll").style.width = `${videoWidth}px`
+
+
+  // For scatter
+  camera.scatterGLEl.style =
+    `width: ${videoWidth}px; height: ${videoHeight}px;`;
+  camera.scatterGL.resize();
+
+  camera.scatterGLEl.style.display =
+    params.render3D ? 'inline-block' : 'none';
 }
 
 

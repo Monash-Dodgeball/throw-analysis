@@ -23,3 +23,5 @@ STATE.modelConfig = {...BLAZEPOSE_CONFIG};
 // Params for overlay
 export const DEFAULT_LINE_WIDTH = 2;
 export const DEFAULT_RADIUS = 4;
+
+export const render3D = true;

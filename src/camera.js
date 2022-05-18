@@ -6,12 +6,27 @@
 import * as params from './params.js';
 import * as utils from './util.js';
 
+// ???
+// These anchor points allow the pose pointcloud to resize according to its
+// position in the input.
+const ANCHOR_POINTS = [[0, 0, 0], [0, 1, 0], [-1, 0, 0], [-1, -1, 0]];
+
+
 export class Context {
   constructor() {
     this.video = document.getElementById('video');
     this.canvas = document.getElementById('output');
     this.source = document.getElementById('currentVID');
     this.ctx = this.canvas.getContext('2d');
+
+    this.scatterGLEl = document.querySelector('#scatter-gl-container');
+    this.scatterGL = new ScatterGL(this.scatterGLEl, {
+      'rotateOnStart': true,
+      'selectEnabled': false,
+      'styles': {polyline: {defaultOpacity: 1, deselectedOpacity: 1}}
+    });
+    this.scatterGLHasInitialized = false;
+
     this.currentFrame = 0;
     this.frameCount = 40; // TODO
     this.framerate = 15;
@@ -171,6 +186,9 @@ export class Context {
       this.drawKeypoints(pose.keypoints);
       this.drawSkeleton(pose.keypoints);
     }
+    if (pose.keypoints3D != null && params.render3D) {
+      this.drawKeypoints3D(pose.keypoints3D);
+    }
   }
 
   /**
@@ -221,9 +239,7 @@ export class Context {
     this.ctx.strokeStyle = 'White';
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 
-    poseDetection.util.getAdjacentPairs(params.STATE.model).forEach(([
-                                                                      i, j
-                                                                    ]) => {
+    poseDetection.util.getAdjacentPairs(params.STATE.model).forEach(([i, j]) => {
       const kp1 = keypoints[i];
       const kp2 = keypoints[j];
 
@@ -249,4 +265,41 @@ export class Context {
     this.mediaRecorder.stop();
   }
 
+  drawKeypoints3D(keypoints) {
+    const scoreThreshold = params.STATE.modelConfig.scoreThreshold || 0;
+    const pointsData =
+        keypoints.map(keypoint => ([-keypoint.x, -keypoint.y, -keypoint.z]));
+
+    const dataset =
+        new ScatterGL.Dataset([...pointsData, ...ANCHOR_POINTS]);
+
+    const keypointInd =
+        poseDetection.util.getKeypointIndexBySide(params.STATE.model);
+    this.scatterGL.setPointColorer((i) => {
+      if (keypoints[i] == null || keypoints[i].score < scoreThreshold) {
+        // hide anchor points and low-confident points.
+        return '#ffffff';
+      }
+      if (i === 0) {
+        return '#ff0000' /* Red */;
+      }
+      if (keypointInd.left.indexOf(i) > -1) {
+        return '#00ff00' /* Green */;
+      }
+      if (keypointInd.right.indexOf(i) > -1) {
+        return '#ffa500' /* Orange */;
+      }
+    });
+
+    if (!this.scatterGLHasInitialized) {
+      this.scatterGL.render(dataset);
+    } else {
+      this.scatterGL.updateDataset(dataset);
+    }
+    const connections = poseDetection.util.getAdjacentPairs(params.STATE.model);
+    const sequences = connections.map(pair => ({indices: pair}));
+
+    //this.scatterGL.setSequences(sequences);
+    this.scatterGLHasInitialized = true;
+  }
 }
