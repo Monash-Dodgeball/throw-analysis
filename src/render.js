@@ -16,9 +16,9 @@ export class Render3D {
     this.renderer.setClearColor(params.RENDER_BG_COLOR, 1.0);
 
     this.camera = new THREE.PerspectiveCamera(45, this.w/this.h, 1, 10000);
-    this.camera.position.z = 200;
-    this.camera.position.x = -100;
-    this.camera.position.y = 100;
+    this.camera.position.z = 25;
+    this.camera.position.x = 150;
+    this.camera.position.y = 75;
 
     this.scene = new THREE.Scene();
     this.scatterPlot = new THREE.Object3D();
@@ -41,7 +41,6 @@ export class Render3D {
     this.renderer.domElement.onmouseup = () => this.onmouseup()
     this.renderer.domElement.onmousemove = (ev) => this.onmousemove(ev)
 
-
     this.animate();
   }
 
@@ -49,6 +48,7 @@ export class Render3D {
     this.down = true;
     this.sx = ev.clientX;
     this.sy = ev.clientY;
+    console.log(this.poseList);
   }
 
   onmouseup() {
@@ -162,7 +162,7 @@ export class Render3D {
     });
     const linePoints = [
       new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(30, 30, 30),
+      new THREE.Vector3(0, 0, 0),
     ];
     const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
     const lineMat = new THREE.LineBasicMaterial({
