@@ -72,7 +72,7 @@ async function runFrame() {
   await camera.loadCurrentFrameData()
   updateUI();
 
-  runFrame()
+  runFrame();
 }
 
 
@@ -215,15 +215,6 @@ async function updateVideo(event) {
 
   // Update width of scrubber
   document.getElementById("range_scroll").style.width = `${videoWidth}px`
-
-
-  // For scatter
-  camera.scatterGLEl.style =
-    `width: ${videoWidth}px; height: ${videoHeight}px;`;
-  camera.scatterGL.resize();
-
-  camera.scatterGLEl.style.display =
-    params.render3D ? 'inline-block' : 'none';
 }
 
 

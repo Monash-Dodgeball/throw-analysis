@@ -5,6 +5,7 @@
 
 import * as params from './params.js';
 import * as utils from './util.js';
+import * as render from './render.js'
 
 // ???
 // These anchor points allow the pose pointcloud to resize according to its
@@ -18,13 +19,6 @@ export class Context {
     this.canvas = document.getElementById('output');
     this.source = document.getElementById('currentVID');
     this.ctx = this.canvas.getContext('2d');
-
-    this.scatterGLEl = document.querySelector('#scatter-gl-container');
-    this.scatterGL = new ScatterGL(this.scatterGLEl, {
-      'selectEnabled': false,
-      'styles': {polyline: {defaultOpacity: 1, deselectedOpacity: 1}}
-    });
-    this.scatterGLHasInitialized = false;
 
     this.currentFrame = 0;
     this.frameCount = 40; // TODO
@@ -44,6 +38,9 @@ export class Context {
     // For converting canvas to video
     this.mediaRecorder = new MediaRecorder(stream, options);
     this.mediaRecorder.ondataavailable = this.handleDataAvailable;
+
+    // TODO Move this elsewhere
+    this.render3D = new render.Render3D();
   }
 
   /* Forces video to seek to current frame */
@@ -101,7 +98,10 @@ export class Context {
       this.drawOverlay();
 
       // TODO remove below when actually doing something with pose infomation
-      document.getElementById("testtext").textContent = JSON.stringify(this.poseList[this.currentFrame]);
+      //document.getElementById("testtext").textContent = JSON.stringify(this.poseList[this.currentFrame]);
+
+      // TODO Move this logic elsewhere
+      this.render3D.updatePose(this.poseList[this.currentFrame]);
     }
   }
 
@@ -184,10 +184,6 @@ export class Context {
     if (pose.keypoints != null) {
       this.drawKeypoints(pose.keypoints);
       this.drawSkeleton(pose.keypoints);
-    }
-    if (pose.keypoints3D != null && params.render3D &&
-        this.mediaRecorder.state != 'recording') {
-      this.drawKeypoints3D(pose.keypoints3D);
     }
   }
 
@@ -290,16 +286,5 @@ export class Context {
         return '#ffa500' /* Orange */;
       }
     });
-
-    if (!this.scatterGLHasInitialized) {
-      this.scatterGL.render(dataset);
-    } else {
-      this.scatterGL.updateDataset(dataset);
-    }
-    const connections = poseDetection.util.getAdjacentPairs(params.STATE.model);
-    const sequences = connections.map(pair => ({indices: pair}));
-
-    //this.scatterGL.setSequences(sequences);
-    this.scatterGLHasInitialized = true;
   }
 }
