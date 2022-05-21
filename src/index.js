@@ -304,6 +304,24 @@ async function app() {
     camera.goToFrame(value)
     updateUI();
   })
+  
+  //assign keyboard shortcuts to frame movements
+  document.addEventListener('keydown',function(e){
+      switch (e.code) {
+        case "Comma":
+        camera.prevFrame();
+        updateUI();
+          break;
+        case "Period":
+        camera.nextFrame();
+        updateUI();
+          break;
+        default:
+        break;
+
+      }
+  })
+
 
   // To extract framerate
   // https://github.com/buzz/mediainfo.js/blob/master/examples/browser-simple/example.js
