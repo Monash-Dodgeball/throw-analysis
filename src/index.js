@@ -60,7 +60,7 @@ async function runFrame() {
     camera.stop()
 
     // For download
-    poseData = utils.poseToCSV(camera.poseList, camera.frameCount);
+    poseData = utils.poseToJSON(camera.poseList);
 
     return;
   }
@@ -172,9 +172,27 @@ async function downloadPose() {
   document.body.appendChild(a);
   a.style = 'display: none';
   a.href = url;
-  a.download = 'pose.csv';
+  a.download = 'pose.json';
   a.click();
   window.URL.revokeObjectURL(a.url);
+}
+
+/*
+ * Update/reset app when pose data is changed
+ */
+async function updatePose(event) {
+  // Get data
+  const file = event.target.files[0];
+  let reader = new FileReader();
+  reader.onload = function() {
+    let newPose = utils.jsonToPose(reader.result);
+    camera.poseList = newPose;
+    camera.redrawCanvas();
+  }
+  reader.readAsText(file);
+  // Error handling
+  //     TODO Pose coords out of bounds
+  //     TODO wrong number of frames
 }
 
 
@@ -269,6 +287,8 @@ async function app() {
   document.getElementById('downloadVideo').addEventListener('click', downloadVideo);
 
   document.getElementById('downloadPose').addEventListener('click', downloadPose);
+
+  document.getElementById('poseFile').addEventListener('change', updatePose);
 
   document.getElementById('prevFrame').addEventListener('click', (e) => {
     camera.prevFrame();
