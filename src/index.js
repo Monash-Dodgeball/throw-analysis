@@ -22,6 +22,8 @@ const playButton = document.getElementById('play')
 let poseData;
 let paused = true; // For play button
 
+let playbackSpeed = 1;
+
 
 /*
  * Create the detector object.
@@ -132,7 +134,7 @@ async function playVideo() {
   let endTime = performance.now()
 
   // minus get time
-  await new Promise(r => setTimeout(r, 1000/camera.framerate - (endTime - startTime)));
+  await new Promise(r => setTimeout(r, 1000/playbackSpeed/camera.framerate - (endTime - startTime)));
   //console.log(endTime-startTime)
 
   if (camera.currentFrame+1 >= camera.frameCount) {
@@ -324,6 +326,11 @@ async function app() {
     camera.goToFrame(value)
     updateUI();
   })
+
+  document.getElementById('playbackSpeed').oninput = function() {
+    playbackSpeed = this.value;
+    document.getElementById("playbackSpeedLabel").innerHTML = "Playback speed: " + this.value;
+  }
 
   // To extract framerate
   // https://github.com/buzz/mediainfo.js/blob/master/examples/browser-simple/example.js
