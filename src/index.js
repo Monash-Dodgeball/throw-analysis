@@ -334,7 +334,12 @@ async function app() {
 
   // To extract framerate
   // https://github.com/buzz/mediainfo.js/blob/master/examples/browser-simple/example.js
-  MediaInfo({ format: 'object' }, (mediainfo) => {
+  MediaInfo(
+  {
+    format: 'object',
+    locateFile: (path, prefix) => prefix + path, // Make sure WASM file is loaded from CDN location
+  },
+  (mediainfo) => {
     document.getElementById("videofile").addEventListener('change', () => onChangeFile(mediainfo))
   })
 };
