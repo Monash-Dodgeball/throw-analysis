@@ -348,6 +348,10 @@ async function app() {
   select.addEventListener('change', (e) => {
     chart.drawChart(camera.poseList, camera.frameCount, $('#jointSelect').val())
   })
+
+  document.getElementById("chartVelocityDim").addEventListener('change', (e) => {
+    chart.drawChart(camera.poseList, camera.frameCount, $('#jointSelect').val())
+  })
   //fetch("/options").then(d=>d.json()).then(d=>{
   //sel1.innerHTML = 
   //  d.map(t=>'<option value="'+t.value+'">'+t.text+'</option>');

@@ -12,6 +12,19 @@ export function velocity3D(poseList, frame_id, keypoint_name) {
   return Math.sqrt(v2)
 }
 
+export function velocity2D(poseList, frame_id, keypoint_name) {
+  if (frame_id == 0) {
+    return 0
+  }
+
+  let id = kpNameMap[keypoint_name];
+  let joint1 = poseList[frame_id-1].keypoints[id];
+  let joint2 = poseList[frame_id].keypoints[id];
+
+  let v2 = (joint2.x - joint1.x)**2 + (joint2.y - joint1.y)**2;
+  return Math.sqrt(v2)
+}
+
 /*
  * Put any miscellaneous functions here.
  */
