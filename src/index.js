@@ -5,6 +5,7 @@
 import {Context} from './camera.js';
 import {STATE, MEDIAPIPE} from './params.js';
 import * as utils from './util.js';
+import * as chart from './chart.js';
 
 
 // For mediapipe backend
@@ -19,6 +20,7 @@ const statusElement = document.getElementById('status');
 const frameText = document.getElementById('current_frame')
 const scrubber = document.getElementById('range_scroll')
 const playButton = document.getElementById('play')
+const select = document.getElementById('jointSelect');
 let poseData;
 let paused = true; // For play button
 
@@ -190,6 +192,7 @@ async function updatePose(event) {
     let newPose = utils.jsonToPose(reader.result);
     camera.poseList = newPose;
     camera.redrawCanvas();
+    chart.drawChart(camera.poseList, camera.frameCount, $('#jointSelect').val())
   }
   reader.readAsText(file);
   // Error handling
@@ -262,8 +265,8 @@ const onChangeFile = (mediainfo) => {
       .analyzeData(getSize, readChunk)
       .then((result) => {
         // TODO Make sure track[1] is always correct
-        camera.framerate = result.media.track[1].FrameRate
-        camera.frameCount = result.media.track[1].FrameCount
+        camera.framerate = parseFloat(result.media.track[1].FrameRate)
+        camera.frameCount = parseInt(result.media.track[1].FrameCount)
         document.getElementById("range_scroll").max = camera.frameCount - 1
         updateUI();
         // Not rounding, in case framerate is non integer
@@ -331,6 +334,27 @@ async function app() {
     playbackSpeed = this.value;
     document.getElementById("playbackSpeedLabel").innerHTML = "Playback speed: " + this.value;
   }
+
+  // Chart stuff
+  for (let i = 0; i <= 32; i++) {
+    let opt = document.createElement('option');
+    opt.value = utils.kpIdxMap[i];
+    opt.innerHTML = utils.kpIdxMap[i];
+    select.appendChild(opt);
+  }
+  select.loadOptions();
+
+  // TODO this event doesn't fire when last option is deselected
+  select.addEventListener('change', (e) => {
+    chart.drawChart(camera.poseList, camera.frameCount, $('#jointSelect').val())
+  })
+  //fetch("/options").then(d=>d.json()).then(d=>{
+  //sel1.innerHTML = 
+  //  d.map(t=>'<option value="'+t.value+'">'+t.text+'</option>');
+
+  //sel1.loadOptions();
+  //})
+
 
   // To extract framerate
   // https://github.com/buzz/mediainfo.js/blob/master/examples/browser-simple/example.js

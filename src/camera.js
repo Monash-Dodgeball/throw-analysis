@@ -5,6 +5,7 @@
 
 import * as params from './params.js';
 import * as utils from './util.js';
+import * as chart from './chart.js';
 
 export class Context {
   constructor() {

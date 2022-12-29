@@ -41,10 +41,17 @@
       <input type="number" id="fieldFrame">
     </div>
 
-    <div class="contianer">
+    <div class="container">
       <button id="play">Play</button>
       <input type="range" min="0.1" max="5" value="1" step="0.1" id="playbackSpeed">
       <label for="playbackSpeed" id="playbackSpeedLabel">Playback speed: 1</label>
+    </div>
+
+    <div class="container">
+      <canvas id="chart" style="width:100%;max-width:700px"></canvas>
+      <select multiple multiselect-search="true" id="jointSelect">
+        <option value="placeholder">PLACEHOLDER TO MAKE THIS BOX WIDER</option>
+      </select>
     </div>
 
     <div class="container">
@@ -53,6 +60,13 @@
     </div>
   </div>
 </body>
+
+<!-- jQuery -->
+<script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"
+></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
 <!-- TODO Fix this -->
@@ -68,10 +82,17 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
 <script type="module" src="src/index.js"></script>
+<script type="module" src="src/multiselect-dropdown.js"></script>
 
 <script
   type="text/javascript"
   src="https://unpkg.com/mediainfo.js/dist/mediainfo.min.js"
 ></script>
+
+
+<!-- Charts -->
+<script
+src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js">
+</script>
 
 </html>
