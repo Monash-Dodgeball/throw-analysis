@@ -1,5 +1,4 @@
-
-export function velocity3D(poseList, frame_id, keypoint_name) {
+export function norm3D(poseList, frame_id, keypoint_name, dims) {
   if (frame_id == 0) {
     return 0
   }
@@ -7,12 +6,16 @@ export function velocity3D(poseList, frame_id, keypoint_name) {
   let id = kpNameMap[keypoint_name];
   let joint1 = poseList[frame_id-1].keypoints3D[id];
   let joint2 = poseList[frame_id].keypoints3D[id];
+  let v2 = 0;
 
-  let v2 = (joint2.x - joint1.x)**2 + (joint2.y - joint1.y)**2 + (joint2.z - joint1.z)**2
-  return Math.sqrt(v2)
+  for (const dim of dims) {
+    v2 += (joint2[dim] - joint1[dim])**2;
+  }
+
+  return Math.sqrt(v2);
 }
 
-export function velocity2D(poseList, frame_id, keypoint_name) {
+export function norm2D(poseList, frame_id, keypoint_name, dims) {
   if (frame_id == 0) {
     return 0
   }
@@ -20,9 +23,21 @@ export function velocity2D(poseList, frame_id, keypoint_name) {
   let id = kpNameMap[keypoint_name];
   let joint1 = poseList[frame_id-1].keypoints[id];
   let joint2 = poseList[frame_id].keypoints[id];
+  let v2 = 0;
 
-  let v2 = (joint2.x - joint1.x)**2 + (joint2.y - joint1.y)**2;
-  return Math.sqrt(v2)
+  for (const dim of dims) {
+    v2 += (joint2[dim] - joint1[dim])**2;
+  }
+
+  return Math.sqrt(v2);
+}
+
+export function velocity3D(poseList, frame_id, keypoint_name) {
+  return norm3D(poseList, frame_id, keypoint_name, ['x', 'y', 'z'])
+}
+
+export function velocity2D(poseList, frame_id, keypoint_name) {
+  return norm2D(poseList, frame_id, keypoint_name, ['x', 'y'])
 }
 
 /*

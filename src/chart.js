@@ -1,5 +1,7 @@
 import * as utils from './util.js';
 
+let myChart;
+
 export function drawChart(poseList, frameCount, keypoint_names) {
   for (const keypoint_name of keypoint_names) {
     // TODO multiple joints selected
@@ -7,7 +9,9 @@ export function drawChart(poseList, frameCount, keypoint_names) {
     let velocityFunction =  $("#chartVelocityDim").is(":checked") ? utils.velocity3D : utils.velocity2D
     let yValues = labels.map((i) => velocityFunction(poseList, i, keypoint_name))
 
-    let myChart = new Chart("chart", {
+    // TODO update data, shouldn't need to call new Chart
+    if (myChart) myChart.destroy();
+    myChart = new Chart("chart", {
       type: "line",
       data: {
         labels: labels,
