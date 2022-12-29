@@ -3,11 +3,16 @@
  * Also used for drawing the overlay on top of the video
  */
 
-import * as params from './params.js';
-import * as utils from './util.js';
 import * as chart from './chart.js';
+import * as params from './params.js';
+import * as render from './render.js'
+import * as utils from './util.js';
 
-const select = document.getElementById('jointSelect');
+// ???
+// These anchor points allow the pose pointcloud to resize according to its
+// position in the input.
+const ANCHOR_POINTS = [[0, 0, 0], [0, 1, 0], [-1, 0, 0], [-1, -1, 0]];
+
 
 export class Context {
   constructor() {
@@ -15,6 +20,7 @@ export class Context {
     this.canvas = document.getElementById('output');
     this.source = document.getElementById('currentVID');
     this.ctx = this.canvas.getContext('2d');
+
     this.currentFrame = 0;
     this.frameCount = 40; // TODO
     this.framerate = 15;
@@ -33,6 +39,9 @@ export class Context {
     // For converting canvas to video
     this.mediaRecorder = new MediaRecorder(stream, options);
     this.mediaRecorder.ondataavailable = this.handleDataAvailable;
+
+    // TODO Move this elsewhere
+    this.render3D = new render.Render3D();
   }
 
   /* Forces video to seek to current frame */
@@ -90,7 +99,10 @@ export class Context {
       this.drawOverlay();
 
       // TODO remove below when actually doing something with pose infomation
-      document.getElementById("testtext").textContent = JSON.stringify(this.poseList[this.currentFrame]);
+      //document.getElementById("testtext").textContent = JSON.stringify(this.poseList[this.currentFrame]);
+
+      // TODO Move this logic elsewhere
+      this.render3D.updatePose(this.poseList[this.currentFrame]);
     }
   }
 
@@ -267,9 +279,7 @@ export class Context {
     this.ctx.strokeStyle = 'White';
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 
-    poseDetection.util.getAdjacentPairs(params.STATE.model).forEach(([
-                                                                      i, j
-                                                                    ]) => {
+    poseDetection.util.getAdjacentPairs(params.STATE.model).forEach(([i, j]) => {
       const kp1 = keypoints[i];
       const kp2 = keypoints[j];
 
@@ -295,4 +305,30 @@ export class Context {
     this.mediaRecorder.stop();
   }
 
+  drawKeypoints3D(keypoints) {
+    const scoreThreshold = params.STATE.modelConfig.scoreThreshold || 0;
+    const pointsData =
+        keypoints.map(keypoint => ([-keypoint.x, -keypoint.y, -keypoint.z]));
+
+    const dataset =
+        new ScatterGL.Dataset([...pointsData, ...ANCHOR_POINTS]);
+
+    const keypointInd =
+        poseDetection.util.getKeypointIndexBySide(params.STATE.model);
+    this.scatterGL.setPointColorer((i) => {
+      if (keypoints[i] == null || keypoints[i].score < scoreThreshold) {
+        // hide anchor points and low-confident points.
+        return '#ffffff';
+      }
+      if (i === 0) {
+        return '#ff0000' /* Red */;
+      }
+      if (keypointInd.left.indexOf(i) > -1) {
+        return '#00ff00' /* Green */;
+      }
+      if (keypointInd.right.indexOf(i) > -1) {
+        return '#ffa500' /* Orange */;
+      }
+    });
+  }
 }

@@ -4,6 +4,7 @@
 
 import {Context} from './camera.js';
 import {STATE, MEDIAPIPE} from './params.js';
+import * as params from './params.js';
 import * as utils from './util.js';
 import * as chart from './chart.js';
 
@@ -75,7 +76,7 @@ async function runFrame() {
   await camera.loadCurrentFrameData()
   updateUI();
 
-  runFrame()
+  runFrame();
 }
 
 

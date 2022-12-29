@@ -37,3 +37,7 @@
     background: #04AA6D; /* Green background */
     cursor: pointer; /* Cursor on hover */
 }
+
+#scatter-gl-container {
+    position: relative;
+}

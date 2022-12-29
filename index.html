@@ -74,6 +74,8 @@
       </div>
     </div>
 
+    <div id="scatter-gl-container"></div>
+
     <div class="container">
       <span id="status"></span>
       <p id="testtext"></p>
@@ -87,6 +89,10 @@
   integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
   crossorigin="anonymous"
 ></script>
+
+<!-- Load three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.4.4/d3.min.js" integrity="sha512-hnFpvCiJ8Fr1lYLqcw6wLgFUOEZ89kWCkO+cEekwcWPIPKyknKV1eZmSSG3UxXfsSuf+z/SgmiYB1zFOg3l2UQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
 <!-- TODO Fix this -->
@@ -102,6 +108,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
 <script type="module" src="src/index.js"></script>
+<script type="module" src="src/render.js"></script>
 <script type="module" src="src/multiselect-dropdown.js"></script>
 
 <script
