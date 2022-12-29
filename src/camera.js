@@ -134,6 +134,10 @@ export class Context {
    * Draws path joint name has taken until current frame.
    */
   drawPath(joint) {
+    // TODO want to indicate velocity, time, and z-axis
+    // Can maybe change color to time, and that itself will indicate velocity?
+    //   But it doesn't seem quite as effective?
+    // Then thickness for z-axis
     let id = utils.kpNameMap[joint];
 
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
@@ -156,6 +160,7 @@ export class Context {
       this.ctx.beginPath();
       this.ctx.lineWidth = params.MIN_PATH_WIDTH + (1-utils.sigmoid(d,5))*params.MAX_PATH_WIDTH
       this.ctx.strokeStyle = `hsl(${360*utils.sigmoid(d,5)}, 100%, 50%)`
+      //this.ctx.strokeStyle = `hsl(${360*i/this.frameCount}, 100%, 50%)`
       this.ctx.moveTo(elbow.x, elbow.y);
       this.ctx.lineTo(new_elbow.x, new_elbow.y);
       this.ctx.stroke();
