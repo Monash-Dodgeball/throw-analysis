@@ -83,6 +83,10 @@ export function jsonToPose(poseJSON) {
   return pose
 }
 
+export function sigmoid(x, k) {
+  return 1 / (1 + Math.exp(-x/k));
+}
+
 /* Maps keypoint name to index */
 export const kpNameMap = {
   'nose':             0,

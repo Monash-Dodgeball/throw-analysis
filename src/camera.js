@@ -123,6 +123,43 @@ export class Context {
     this.ctx.beginPath();
     this.ctx.arc(elbow.x, elbow.y, 12, 0, 2 * Math.PI);
     this.ctx.stroke();
+
+    this.drawPath('right_elbow')
+  }
+
+  /*
+   * Draws path joint name has taken until current frame.
+   */
+  drawPath(joint) {
+    let id = utils.kpNameMap[joint];
+
+    this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
+    this.ctx.strokeStyle = 'blue';
+    this.ctx.beginPath();
+
+    let pose = this.poseList[0];
+    let elbow = pose.keypoints[id];
+    this.ctx.moveTo(elbow.x, elbow.y);
+    this.ctx.stroke();
+
+    // TODO possibly smooth, based on velocity
+    // I have no idea why we need to do currentFrame+1
+    for (let i = 1; i <= this.currentFrame+1; i++) {
+      let new_pose = this.poseList[i];
+      let new_elbow = pose.keypoints[id];
+
+      let d = Math.sqrt((new_elbow.x - elbow.x)**2 + (new_elbow.y - elbow.y)**2);
+
+      this.ctx.beginPath();
+      this.ctx.lineWidth = params.MIN_PATH_WIDTH + (1-utils.sigmoid(d,5))*params.MAX_PATH_WIDTH
+      this.ctx.strokeStyle = `hsl(${360*utils.sigmoid(d,5)}, 100%, 50%)`
+      this.ctx.moveTo(elbow.x, elbow.y);
+      this.ctx.lineTo(new_elbow.x, new_elbow.y);
+      this.ctx.stroke();
+
+      pose = new_pose;
+      elbow = new_elbow;
+    }
   }
 
   /*
