@@ -7,6 +7,8 @@ import * as params from './params.js';
 import * as utils from './util.js';
 import * as chart from './chart.js';
 
+const select = document.getElementById('jointSelect');
+
 export class Context {
   constructor() {
     this.video = document.getElementById('video');
@@ -124,7 +126,8 @@ export class Context {
     this.ctx.arc(elbow.x, elbow.y, 12, 0, 2 * Math.PI);
     this.ctx.stroke();
 
-    this.drawPath('right_elbow')
+    chart.drawChart(this.poseList, this.frameCount, $('#jointSelect').val())
+    $('#jointSelect').val().map((joint) => {this.drawPath(joint)})
   }
 
   /*

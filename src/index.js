@@ -347,6 +347,7 @@ async function app() {
   // TODO this event doesn't fire when last option is deselected
   select.addEventListener('change', (e) => {
     chart.drawChart(camera.poseList, camera.frameCount, $('#jointSelect').val())
+    camera.redrawCanvas();
   })
 
   document.getElementById("chartVelocityDim").addEventListener('change', (e) => {
