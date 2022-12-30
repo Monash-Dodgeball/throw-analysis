@@ -354,13 +354,24 @@ async function app() {
   document.getElementById("chartVelocityDim").addEventListener('change', (e) => {
     chart.drawChart(camera.poseList, camera.frameCount, $('#jointSelect').val())
   })
-  //fetch("/options").then(d=>d.json()).then(d=>{
-  //sel1.innerHTML = 
-  //  d.map(t=>'<option value="'+t.value+'">'+t.text+'</option>');
 
-  //sel1.loadOptions();
-  //})
+  if ($("#show3DPlot").is(":checked")) {
+      $("#renderer").show();
+      console.log("test")
+    } else {
+      $("#renderer").hide();
+      console.log("test2")
+  }
 
+  $("#show3DPlot").on("change", () => {
+    if ($("#show3DPlot").is(":checked")) {
+      $("#renderer").show();
+      console.log("test")
+    } else {
+      $("#renderer").hide();
+      console.log("test2")
+    }
+  })
 
   // To extract framerate
   // https://github.com/buzz/mediainfo.js/blob/master/examples/browser-simple/example.js

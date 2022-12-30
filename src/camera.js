@@ -56,6 +56,8 @@ export class Context {
     });
   }
 
+  // TODO Move nextFrame etc. logic elsewhere so that we're not calling everything in redrawCanvas (e.g. render.updatePose)?
+
   /* Seek to first frame */
   async firstFrame() {
     this.currentFrame = 0
@@ -101,7 +103,6 @@ export class Context {
       // TODO remove below when actually doing something with pose infomation
       //document.getElementById("testtext").textContent = JSON.stringify(this.poseList[this.currentFrame]);
 
-      // TODO Move this logic elsewhere
       this.render3D.updatePose(this.poseList[this.currentFrame]);
     }
   }

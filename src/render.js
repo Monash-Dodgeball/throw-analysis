@@ -13,6 +13,8 @@ export class Render3D {
     this.renderer.setSize(this.w, this.h);
 
     document.body.appendChild(this.renderer.domElement);
+    this.renderer.domElement.id = "renderer";
+
     this.renderer.setClearColor(params.RENDER_BG_COLOR, 1.0);
 
     this.camera = new THREE.PerspectiveCamera(45, this.w/this.h, 1, 10000);
@@ -135,6 +137,10 @@ export class Render3D {
   }
 
   updatePose(pose) {
+    if (!$("#show3DPlot").is(":checked")) {
+      return;
+    } 
+
     let keypoints = pose.keypoints3D
     keypoints.forEach((point, i) => {
       this.joints[i].position.set(point.x*50, -point.y*50, -point.z*50);
