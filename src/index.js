@@ -331,6 +331,23 @@ async function app() {
     updateUI();
   })
 
+  //assign keyboard shortcuts to frame movements
+  document.addEventListener('keydown',function(e){
+      switch (e.code) {
+        case "Comma":
+        camera.prevFrame();
+        updateUI();
+          break;
+        case "Period":
+        camera.nextFrame();
+        updateUI();
+          break;
+        default:
+        break;
+
+      }
+  })
+
   document.getElementById('playbackSpeed').oninput = function() {
     playbackSpeed = this.value;
     document.getElementById("playbackSpeedLabel").innerHTML = "Playback speed: " + this.value;
@@ -366,10 +383,8 @@ async function app() {
   $("#show3DPlot").on("change", () => {
     if ($("#show3DPlot").is(":checked")) {
       $("#renderer").show();
-      console.log("test")
     } else {
       $("#renderer").hide();
-      console.log("test2")
     }
   })
 

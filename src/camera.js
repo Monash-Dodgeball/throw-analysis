@@ -75,7 +75,7 @@ export class Context {
 
   /* Seek to previous frame */
   async prevFrame() {
-    if (this.currentFrameIndex <= 0) return
+    if (this.currentFrame <= 0) return
     this.currentFrame -= 1
     await this.loadCurrentFrameData()
     this.redrawCanvas()
