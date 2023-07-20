@@ -3,8 +3,16 @@
  * Also used for drawing the overlay on top of the video
  */
 
+import * as chart from './chart.js';
 import * as params from './params.js';
+import * as render from './render.js'
 import * as utils from './util.js';
+
+// ???
+// These anchor points allow the pose pointcloud to resize according to its
+// position in the input.
+const ANCHOR_POINTS = [[0, 0, 0], [0, 1, 0], [-1, 0, 0], [-1, -1, 0]];
+
 
 export class Context {
   constructor() {
@@ -12,6 +20,7 @@ export class Context {
     this.canvas = document.getElementById('output');
     this.source = document.getElementById('currentVID');
     this.ctx = this.canvas.getContext('2d');
+
     this.currentFrame = 0;
     this.frameCount = 40; // TODO
     this.framerate = 15;
@@ -30,6 +39,9 @@ export class Context {
     // For converting canvas to video
     this.mediaRecorder = new MediaRecorder(stream, options);
     this.mediaRecorder.ondataavailable = this.handleDataAvailable;
+
+    // TODO Move this elsewhere
+    this.render3D = new render.Render3D();
   }
 
   /* Forces video to seek to current frame */
@@ -43,6 +55,8 @@ export class Context {
       };
     });
   }
+
+  // TODO Move nextFrame etc. logic elsewhere so that we're not calling everything in redrawCanvas (e.g. render.updatePose)?
 
   /* Seek to first frame */
   async firstFrame() {
@@ -87,7 +101,9 @@ export class Context {
       this.drawOverlay();
 
       // TODO remove below when actually doing something with pose infomation
-      document.getElementById("testtext").textContent = JSON.stringify(this.poseList[this.currentFrame]);
+      //document.getElementById("testtext").textContent = JSON.stringify(this.poseList[this.currentFrame]);
+
+      this.render3D.updatePose(this.poseList[this.currentFrame]);
     }
   }
 
@@ -122,6 +138,49 @@ export class Context {
     this.ctx.beginPath();
     this.ctx.arc(elbow.x, elbow.y, 12, 0, 2 * Math.PI);
     this.ctx.stroke();
+
+    chart.drawChart(this.poseList, this.frameCount, $('#jointSelect').val())
+    $('#jointSelect').val().map((joint) => {this.drawPath(joint)})
+  }
+
+  /*
+   * Draws path joint name has taken until current frame.
+   */
+  drawPath(joint) {
+    // TODO want to indicate velocity, time, and z-axis
+    // Can maybe change color to time, and that itself will indicate velocity?
+    //   But it doesn't seem quite as effective?
+    // Then thickness for z-axis
+    let id = utils.kpNameMap[joint];
+
+    this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
+    this.ctx.strokeStyle = 'blue';
+    this.ctx.beginPath();
+
+    let pose = this.poseList[0];
+    let elbow = pose.keypoints[id];
+    this.ctx.moveTo(elbow.x, elbow.y);
+    this.ctx.stroke();
+
+    // TODO possibly smooth, based on velocity
+    // I have no idea why we need to do currentFrame+1
+    for (let i = 1; i <= this.currentFrame+1; i++) {
+      let new_pose = this.poseList[i];
+      let new_elbow = pose.keypoints[id];
+
+      let d = Math.sqrt((new_elbow.x - elbow.x)**2 + (new_elbow.y - elbow.y)**2);
+
+      this.ctx.beginPath();
+      this.ctx.lineWidth = params.MIN_PATH_WIDTH + (1-utils.sigmoid(d,5))*params.MAX_PATH_WIDTH
+      this.ctx.strokeStyle = `hsl(${360*utils.sigmoid(d,5)}, 100%, 50%)`
+      //this.ctx.strokeStyle = `hsl(${360*i/this.frameCount}, 100%, 50%)`
+      this.ctx.moveTo(elbow.x, elbow.y);
+      this.ctx.lineTo(new_elbow.x, new_elbow.y);
+      this.ctx.stroke();
+
+      pose = new_pose;
+      elbow = new_elbow;
+    }
   }
 
   /*
@@ -221,9 +280,7 @@ export class Context {
     this.ctx.strokeStyle = 'White';
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 
-    poseDetection.util.getAdjacentPairs(params.STATE.model).forEach(([
-                                                                      i, j
-                                                                    ]) => {
+    poseDetection.util.getAdjacentPairs(params.STATE.model).forEach(([i, j]) => {
       const kp1 = keypoints[i];
       const kp2 = keypoints[j];
 
@@ -249,4 +306,30 @@ export class Context {
     this.mediaRecorder.stop();
   }
 
+  drawKeypoints3D(keypoints) {
+    const scoreThreshold = params.STATE.modelConfig.scoreThreshold || 0;
+    const pointsData =
+        keypoints.map(keypoint => ([-keypoint.x, -keypoint.y, -keypoint.z]));
+
+    const dataset =
+        new ScatterGL.Dataset([...pointsData, ...ANCHOR_POINTS]);
+
+    const keypointInd =
+        poseDetection.util.getKeypointIndexBySide(params.STATE.model);
+    this.scatterGL.setPointColorer((i) => {
+      if (keypoints[i] == null || keypoints[i].score < scoreThreshold) {
+        // hide anchor points and low-confident points.
+        return '#ffffff';
+      }
+      if (i === 0) {
+        return '#ff0000' /* Red */;
+      }
+      if (keypointInd.left.indexOf(i) > -1) {
+        return '#00ff00' /* Green */;
+      }
+      if (keypointInd.right.indexOf(i) > -1) {
+        return '#ffa500' /* Orange */;
+      }
+    });
+  }
 }

@@ -4,7 +4,9 @@
 
 import {Context} from './camera.js';
 import {STATE, MEDIAPIPE} from './params.js';
+import * as params from './params.js';
 import * as utils from './util.js';
+import * as chart from './chart.js';
 
 
 // For mediapipe backend
@@ -19,8 +21,11 @@ const statusElement = document.getElementById('status');
 const frameText = document.getElementById('current_frame')
 const scrubber = document.getElementById('range_scroll')
 const playButton = document.getElementById('play')
+const select = document.getElementById('jointSelect');
 let poseData;
 let paused = true; // For play button
+
+let playbackSpeed = 1;
 
 
 /*
@@ -71,7 +76,7 @@ async function runFrame() {
   await camera.loadCurrentFrameData()
   updateUI();
 
-  runFrame()
+  runFrame();
 }
 
 
@@ -132,7 +137,7 @@ async function playVideo() {
   let endTime = performance.now()
 
   // minus get time
-  await new Promise(r => setTimeout(r, 1000/camera.framerate - (endTime - startTime)));
+  await new Promise(r => setTimeout(r, 1000/playbackSpeed/camera.framerate - (endTime - startTime)));
   //console.log(endTime-startTime)
 
   if (camera.currentFrame+1 >= camera.frameCount) {
@@ -188,6 +193,7 @@ async function updatePose(event) {
     let newPose = utils.jsonToPose(reader.result);
     camera.poseList = newPose;
     camera.redrawCanvas();
+    chart.drawChart(camera.poseList, camera.frameCount, $('#jointSelect').val())
   }
   reader.readAsText(file);
   // Error handling
@@ -260,8 +266,8 @@ const onChangeFile = (mediainfo) => {
       .analyzeData(getSize, readChunk)
       .then((result) => {
         // TODO Make sure track[1] is always correct
-        camera.framerate = result.media.track[1].FrameRate
-        camera.frameCount = result.media.track[1].FrameCount
+        camera.framerate = parseFloat(result.media.track[1].FrameRate)
+        camera.frameCount = parseInt(result.media.track[1].FrameCount)
         document.getElementById("range_scroll").max = camera.frameCount - 1
         updateUI();
         // Not rounding, in case framerate is non integer
@@ -343,9 +349,71 @@ async function app() {
   })
 
 
+  //assign keyboard shortcuts to frame movements
+  document.addEventListener('keydown',function(e){
+      switch (e.code) {
+        case "Comma":
+        camera.prevFrame();
+        updateUI();
+          break;
+        case "Period":
+        camera.nextFrame();
+        updateUI();
+          break;
+        default:
+        break;
+
+      }
+  })
+
+  document.getElementById('playbackSpeed').oninput = function() {
+    playbackSpeed = this.value;
+    document.getElementById("playbackSpeedLabel").innerHTML = "Playback speed: " + this.value;
+  }
+
+  // Chart stuff
+  for (let i = 0; i <= 32; i++) {
+    let opt = document.createElement('option');
+    opt.value = utils.kpIdxMap[i];
+    opt.innerHTML = utils.kpIdxMap[i];
+    select.appendChild(opt);
+  }
+  select.loadOptions();
+
+  // TODO this event doesn't fire when last option is deselected
+  select.addEventListener('change', (e) => {
+    chart.drawChart(camera.poseList, camera.frameCount, $('#jointSelect').val())
+    camera.redrawCanvas();
+  })
+
+  document.getElementById("chartVelocityDim").addEventListener('change', (e) => {
+    chart.drawChart(camera.poseList, camera.frameCount, $('#jointSelect').val())
+  })
+
+  if ($("#show3DPlot").is(":checked")) {
+      $("#renderer").show();
+      console.log("test")
+    } else {
+      $("#renderer").hide();
+      console.log("test2")
+  }
+
+  $("#show3DPlot").on("change", () => {
+    if ($("#show3DPlot").is(":checked")) {
+      $("#renderer").show();
+    } else {
+      $("#renderer").hide();
+    }
+  })
+
   // To extract framerate
   // https://github.com/buzz/mediainfo.js/blob/master/examples/browser-simple/example.js
-  MediaInfo({ format: 'object' }, (mediainfo) => {
+  MediaInfo(
+  {
+    format: 'object',
+    locateFile: (path, prefix) => prefix + path, // Make sure WASM file is loaded from CDN location
+  },
+  (mediainfo) => {
     document.getElementById("videofile").addEventListener('change', () => onChangeFile(mediainfo))
   })
 };

@@ -1,3 +1,45 @@
+export function norm3D(poseList, frame_id, keypoint_name, dims) {
+  if (frame_id == 0) {
+    return 0
+  }
+
+  let id = kpNameMap[keypoint_name];
+  let joint1 = poseList[frame_id-1].keypoints3D[id];
+  let joint2 = poseList[frame_id].keypoints3D[id];
+  let v2 = 0;
+
+  for (const dim of dims) {
+    v2 += (joint2[dim] - joint1[dim])**2;
+  }
+
+  return Math.sqrt(v2);
+}
+
+export function norm2D(poseList, frame_id, keypoint_name, dims) {
+  if (frame_id == 0) {
+    return 0
+  }
+
+  let id = kpNameMap[keypoint_name];
+  let joint1 = poseList[frame_id-1].keypoints[id];
+  let joint2 = poseList[frame_id].keypoints[id];
+  let v2 = 0;
+
+  for (const dim of dims) {
+    v2 += (joint2[dim] - joint1[dim])**2;
+  }
+
+  return Math.sqrt(v2);
+}
+
+export function velocity3D(poseList, frame_id, keypoint_name) {
+  return norm3D(poseList, frame_id, keypoint_name, ['x', 'y', 'z'])
+}
+
+export function velocity2D(poseList, frame_id, keypoint_name) {
+  return norm2D(poseList, frame_id, keypoint_name, ['x', 'y'])
+}
+
 /*
  * Put any miscellaneous functions here.
  */
@@ -39,6 +81,20 @@ export function poseToJSON(poseList) {
 export function jsonToPose(poseJSON) {
   let pose = JSON.parse(poseJSON)
   return pose
+}
+
+export function sigmoid(x, k) {
+  return 1 / (1 + Math.exp(-x/k));
+}
+
+// from http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+export function hexToRgb(hex) { //TODO rewrite with vector output
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
 }
 
 /* Maps keypoint name to index */
